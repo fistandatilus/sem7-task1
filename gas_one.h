@@ -1,3 +1,5 @@
+#include <math.h>
+
 //Структуры из пособия
 
 //Параметры дифференциальной задачи
@@ -18,3 +20,9 @@ struct P_she {
     double tau;
     double eta;
 };
+
+
+#define SMALL_NUMBER (1e-200)
+
+//метод прогонки
+int progonka(int n, double *a, double *b, double *c, const double *f);
