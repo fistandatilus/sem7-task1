@@ -1,5 +1,3 @@
-#include <string.h>
-
 #include "functions.h"
 #include "gas_one.h"
 
@@ -81,6 +79,8 @@ void solve(const P_gas &p_gas, const P_she &p_she, double *res, double *buf) {
 
         cv = v + 2*dim;
         ch = h + 2*dim;
+        v[0] = 0;
+        v[M] = 0;
 
         //заполнение для V
         double frac = tau*mu_loc/h_x/h_x;
@@ -106,6 +106,7 @@ void solve(const P_gas &p_gas, const P_she &p_she, double *res, double *buf) {
         }
         f[M-1] = v[M-1] + tau*(-(ph[M] - ph[M-2])/2/h_x/h[M-1] - (mu_loc - mu/h[M-1])*(v[M] - 2*v[M-1] + v[M-2])/h_x/h_x 
                + func(tau*n, double(M-1)/M*p_gas.Segm_X, mu)); //не заполнится в циклe
+        cv[M-1] = 1 + 2*frac;
         progonka(M+1, a, b, cv, f);
 
         //заполнение для H
@@ -126,9 +127,10 @@ void solve(const P_gas &p_gas, const P_she &p_she, double *res, double *buf) {
             cososim = tau/4/h_x*(cv[i] + cv[i+1]);
             b[i] = cososim;
             a[i+1] = -cososim;
-            f[i] = h[i] - tau/8/h_x/h_x*h[i]*(cv[i+1] - cv[i-1]) + tau*otlad_func(tau*n, double(i)/M*p_gas.Segm_X);
+            f[i] = h[i] - tau/4/h_x*h[i]*(cv[i+1] - cv[i-1]) + tau*otlad_func(tau*n, double(i)/M*p_gas.Segm_X);
         }
-        f[M-1] = h[M-1] - tau/8/h_x/h_x*h[M-1]*(cv[M] - cv[M-2]) + tau*otlad_func(tau*n, double(M-1)/M*p_gas.Segm_X); //не заполнится в цикле
+        f[M-1] = h[M-1] - tau/4/h_x*h[M-1]*(cv[M] - cv[M-2]) + tau*otlad_func(tau*n, double(M-1)/M*p_gas.Segm_X); //не заполнится в цикле
+        ch[M-1] = 1;
         progonka(M+1, a, b, ch, f);
 
         v = cv;
