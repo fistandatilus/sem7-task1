@@ -9,6 +9,9 @@ struct P_gas {
     double p_ro;
     double p_gamma;
     double mu;
+    double (*f)(double);   //правая часть
+    double (*f_0)(double); //дополнительная правая часть для отладочного теста
+    double (*p)(double);   //зависимость
 };
 
 //Параметры схемы
