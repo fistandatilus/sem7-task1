@@ -32,23 +32,25 @@ int progonka(int n, double *a, double *b, double *c, const double *f) {
 }
 
 
-void solve(const P_gas &p_gas, const P_she &p_she, double *v, double *h, double *buf) {
-    double *a, *b, *ch, *cv, *f;
+void solve(const P_gas &p_gas, const P_she &p_she, double *res, double *buf) {
+    double *a, *b, *ch, *cv, *f, *v, *h, *ph;
     double tau = p_she.tau;
     double h_x = p_she.h_x;
     double mu = p_gas.mu;
     int M = p_she.M_x;
     int N = p_she.N;
+    int dim = p_she.Dim;
     auto func = p_gas.f;
     auto otlad_func = p_gas.f_0;
-    auto p = p_gas.p;
     double mu_loc;
 
+    v = res;
+    h = v + dim;
+
     a = buf;
-    b = buf + M;
-    cv = buf + 2*M;
-    ch = buf + 3*M;
-    f = buf + 4*M;
+    b = buf + M + 1;
+    f = buf + 2*(M + 1);
+    ph = buf + 3*(M + 1);
 
     //начальные данные
     //пока захардкожу
@@ -65,6 +67,20 @@ void solve(const P_gas &p_gas, const P_she &p_she, double *v, double *h, double 
             double sr = mu/h[i];
             if (mu_loc < sr) mu_loc = sr;
         }
+        //вычисление p(h)
+        if (p_gas.p_mode < 3) {
+            for (int i = 0; i <= M; i++) {
+                ph[i] = p_gas.p_ro*h[i];
+            }
+        }
+        else {
+            for (int i = 0; i <= M; i++) {
+                ph[i] = pow(h[i], p_gas.p_gamma);
+            }
+        }
+
+        cv = v + 2*dim;
+        ch = h + 2*dim;
 
         //заполнение для V
         double frac = tau*mu_loc/h_x/h_x;
@@ -73,22 +89,22 @@ void solve(const P_gas &p_gas, const P_she &p_she, double *v, double *h, double 
         b[0] = cososim - frac;
         a[1] = -cososim - frac;
         cv[0] = 1 + 2*frac;
-        f[0] = tau*(-p(h[1])/(2*h_x*h[0]) - (mu_loc - mu/h[0])*(v[1] - 2*v[0])/h_x/h_x + func(tau*n, 0, mu));
+        f[0] = tau*(-ph[1]/(2*h_x*h[0]) - (mu_loc - mu/h[0])*(v[1] - 2*v[0])/h_x/h_x + func(tau*n, 0, mu));
         cososim = tau/(6*h_x)*v[M-1];
         a[M] = -cososim - frac;
         b[M-1] = cososim - frac;
         b[M] = 0; 
         cv[M] = 1 + 2*frac;
-        f[M] = tau*(p(h[M-1])/(2*h_x*h[M]) - (mu_loc - mu/h[M])*(v[M-1] - 2*v[M])/h_x/h_x + func(tau*n, p_gas.Segm_X, mu));
+        f[M] = tau*(ph[M-1]/(2*h_x*h[M]) - (mu_loc - mu/h[M])*(v[M-1] - 2*v[M])/h_x/h_x + func(tau*n, p_gas.Segm_X, mu));
         for (int i = 1; i <= M-2; i++) {
             cv[i] = 1 + 2*frac;
             cososim = tau/(6*h_x)*(v[i] + v[i+1]);
             b[i] = cososim - frac;
             a[i+1] = -cososim - frac;
-            f[i] = v[i] + tau*(-(p(h[i+1]) - p(h[i-1]))/2/h_x/h[i] - (mu_loc - mu/h[i])*(v[i+1] - 2*v[i] + v[i-1])/h_x/h_x 
+            f[i] = v[i] + tau*(-(ph[i+1] - ph[i-1])/2/h_x/h[i] - (mu_loc - mu/h[i])*(v[i+1] - 2*v[i] + v[i-1])/h_x/h_x 
                    + func(tau*n, double(i)/M*p_gas.Segm_X, mu));
         }
-        f[M-1] = v[M-1] + tau*(-(p(h[M]) - p(h[M-2]))/2/h_x/h[M-1] - (mu_loc - mu/h[M-1])*(v[M] - 2*v[M-1] + v[M-2])/h_x/h_x 
+        f[M-1] = v[M-1] + tau*(-(ph[M] - ph[M-2])/2/h_x/h[M-1] - (mu_loc - mu/h[M-1])*(v[M] - 2*v[M-1] + v[M-2])/h_x/h_x 
                + func(tau*n, double(M-1)/M*p_gas.Segm_X, mu)); //не заполнится в циклe
         progonka(M+1, a, b, cv, f);
 
@@ -115,8 +131,8 @@ void solve(const P_gas &p_gas, const P_she &p_she, double *v, double *h, double 
         f[M-1] = h[M-1] - tau/8/h_x/h_x*h[M-1]*(cv[M] - cv[M-2]) + tau*otlad_func(tau*n, double(M-1)/M*p_gas.Segm_X); //не заполнится в цикле
         progonka(M+1, a, b, ch, f);
 
-        memcpy(v, cv, (M+1)*sizeof(double));
-        memcpy(h, ch, (M+1)*sizeof(double));
+        v = cv;
+        h = ch;
     }
 
 }

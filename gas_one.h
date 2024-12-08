@@ -1,5 +1,7 @@
 #include <math.h>
 
+#include "functions.h"
+
 //Структуры из пособия
 
 //Параметры дифференциальной задачи
@@ -8,10 +10,10 @@ struct P_gas {
     double Segm_X;
     double p_ro;
     double p_gamma;
+    int p_mode;
     double mu;
     double (*f)(double, double, double);   //правая часть
     double (*f_0)(double, double); //дополнительная правая часть для отладочного теста
-    double (*p)(double); //зависимость
 };
 
 //Параметры схемы
@@ -29,3 +31,9 @@ struct P_she {
 
 //метод прогонки
 int progonka(int n, double *a, double *b, double *c, const double *f);
+
+//схема 1
+void solve(const P_gas &p_gas, const P_she &p_she, double *res, double *buf);
+
+//нормы
+double C_norm(P_she &p_she, double *res1, double *res2);

@@ -1,5 +1,5 @@
 #include "functions.h"
-
+/*
 double rho_test(double t, double x) {
     return exp(t)*(cos(3*M_PI*x) + 1.5);
 }
@@ -23,4 +23,30 @@ double f_test_poc(double t, double x, double mu) {
 
 double f_0_test(double t, double x) {
     return exp(t)*cos(2*M_PI*t)*M_PI*(4*cos(4*M_PI*x)*(cos(3*M_PI*x) + 1.5)- 3*sin(3*M_PI*x)*sin(4*M_PI*x));
+}
+*/
+
+double rho_test(double t, double x) {
+    return (t+1)*(x+1);
+}
+
+double u_test(double t, double x) {
+    return (t+1)*(x*x-x);
+}
+
+double f_test_0(double t, double x, double mu) {
+    return (t+1)*((x+1)*(x*x-x) + (t+1)*(t+1)*(x*x*x-x)*(2*x-1) + (t+1)*(x+1) - mu*2);
+}
+double f_test_1(double t, double x, double mu) {
+    return (t+1)*((x+1)*(x*x-x) + (t+1)*(t+1)*(x*x*x-x)*(2*x-1) + 10*(t+1)*(x+1) - mu*2);
+}
+double f_test_2(double t, double x, double mu) {
+    return (t+1)*((x+1)*(x*x-x) + (t+1)*(t+1)*(x*x*x-x)*(2*x-1) + 100*(t+1)*(x+1) - mu*2);
+}
+double f_test_poc(double t, double x, double mu) {
+    return 0;
+}
+
+double f_0_test(double t, double x) {
+    return x + 1 + (t+1)*(t+1)*(x*x/3 - 1);
 }
