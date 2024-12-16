@@ -1,3 +1,6 @@
+#include <string.h>
+#include <stdio.h>
+
 #include "functions.h"
 #include "gas_one.h"
 
@@ -41,6 +44,7 @@ void solve(const P_gas &p_gas, const P_she &p_she, double *res, double *buf) {
     auto func = p_gas.f;
     auto otlad_func = p_gas.f_0;
     double mu_loc;
+    double *res2 = new double[2*(M+1)];
 
     v = res;
     h = v + dim;
@@ -49,12 +53,14 @@ void solve(const P_gas &p_gas, const P_she &p_she, double *res, double *buf) {
     b = buf + M + 1;
     f = buf + 2*(M + 1);
     ph = buf + 3*(M + 1);
+    cv = buf + 4*(M + 1);
+    ch = buf + 5*(M + 1);
 
     //начальные данные
     //пока захардкожу
     for (int i = 0; i <= M; i++) {
-        v[i] = u_test(0, double(i)/M);
-        h[i] = rho_test(0, double(i)/M);
+        v[i] = u_test(0, i*h_x);
+        h[i] = rho_test(0, i*h_x);
     }
     
     for(int n = 1; n <= N; n++) {
@@ -77,64 +83,57 @@ void solve(const P_gas &p_gas, const P_she &p_she, double *res, double *buf) {
             }
         }
 
-        cv = v + 2*dim;
-        ch = h + 2*dim;
         v[0] = 0;
         v[M] = 0;
 
         //заполнение для V
         double frac = tau*mu_loc/h_x/h_x;
-        a[0] = 0;
-        double cososim = tau/(6*h_x)*v[1];
-        b[0] = cososim - frac;
-        a[1] = -cososim - frac;
-        cv[0] = 1 + 2*frac;
-        f[0] = tau*(-ph[1]/(2*h_x*h[0]) - (mu_loc - mu/h[0])*(v[1] - 2*v[0])/h_x/h_x + func(tau*n, 0, mu));
-        cososim = tau/(6*h_x)*v[M-1];
-        a[M] = -cososim - frac;
-        b[M-1] = cososim - frac;
-        b[M] = 0; 
-        cv[M] = 1 + 2*frac;
-        f[M] = tau*(ph[M-1]/(2*h_x*h[M]) - (mu_loc - mu/h[M])*(v[M-1] - 2*v[M])/h_x/h_x + func(tau*n, p_gas.Segm_X, mu));
-        for (int i = 1; i <= M-2; i++) {
+        double cososim;
+        for (int i = 1; i <= M-1; i++) {
             cv[i] = 1 + 2*frac;
-            cososim = tau/(6*h_x)*(v[i] + v[i+1]);
-            b[i] = cososim - frac;
-            a[i+1] = -cososim - frac;
-            f[i] = v[i] + tau*(-(ph[i+1] - ph[i-1])/2/h_x/h[i] - (mu_loc - mu/h[i])*(v[i+1] - 2*v[i] + v[i-1])/h_x/h_x 
-                   + func(tau*n, double(i)/M*p_gas.Segm_X, mu));
+            b[i] = tau/(6*h_x)*(v[i] + v[i+1]) - frac;
+            a[i] = -tau/(6*h_x)*(v[i-1] + v[i])  - frac;
+            f[i] = v[i] + tau*(-(ph[i+1] - ph[i-1])/2/h_x/h[i] - (mu_loc - mu/h[i])*(v[i+1] - 2*v[i] + v[i-1])/h_x/h_x + func(tau*(n-1), i*h_x, mu));
         }
-        f[M-1] = v[M-1] + tau*(-(ph[M] - ph[M-2])/2/h_x/h[M-1] - (mu_loc - mu/h[M-1])*(v[M] - 2*v[M-1] + v[M-2])/h_x/h_x 
-               + func(tau*n, double(M-1)/M*p_gas.Segm_X, mu)); //не заполнится в циклe
-        cv[M-1] = 1 + 2*frac;
-        progonka(M+1, a, b, cv, f);
+        a[1] = 0;
+        b[M-1] = 0;
+        progonka(M-1, a+1, b+1, cv+1, f+1);
+        cv[0] = 0;
+        cv[M] = 0;
+        //for (int i = 0; i <= M; i++) printf("cv = %le, f = %le %d\n", cv[i], f[i], i);
 
         //заполнение для H
-        ch[0] = 1;
+        ch[0] = 1 - (tau/2/h_x)*cv[0];
         b[0] = tau/2/h_x*cv[1];
         a[0] = 0;
         a[1] = -tau/4/h_x*(cv[0] + cv[1]);
-        f[0] = h[0] - tau/2/h_x*(h[0]*cv[1] - h[2]*v[2] + 2*h[1]*v[1] + 0.5*h[3]*v[3] - h[2]*v[2] + 0.5*h[1]*v[1]
-            - h[0]*v[2] + 2*h[0]*v[1] + 0.5*h[0]*v[3] - h[0]*v[2] + 0.5*h[0]*v[1]) + tau*otlad_func(tau*n, 0);
-        ch[M] = 1;
-        a[M] = tau/2/h_x*v[M-1];
-        b[M] = 0;
-        b[M-1] = tau/4/h_x*(cv[M-1] + cv[M]);
-        f[M] = h[M] - tau/2/h_x*(h[M]*cv[M-1] - h[M-2]*v[M-2] + 2*h[M-1]*v[M-1] + 0.5*h[M-3]*v[M-3] - h[M-2]*v[M-2] + 0.5*h[M-1]*v[M-1] 
-            - h[M]*v[M-2] + 2*h[M]*v[M-1] + 0.5*h[M]*v[M-3] - h[M]*v[M-2] + 0.5*h[M]*v[M-1]) + tau*otlad_func(tau*n, p_gas.Segm_X);
-        for (int i = 1; i <= M-2; i++) {
+        f[0] = h[0] - tau/2/h_x*(h[0]*cv[1] - h[0]*cv[0] - 2*h[2]*v[2] - 2*h[0]*v[0] + 2.5*h[1]*v[1] + 0.5*h[3]*v[3] - 2*h[0]*v[2] + 2.5*h[0]*v[1] + 0.5*h[0]*v[3]) + tau*otlad_func(tau*(n-1), 0);
+        for (int i = 1; i <= M-1; i++) {
             ch[i] = 1;
             cososim = tau/4/h_x*(cv[i] + cv[i+1]);
             b[i] = cososim;
             a[i+1] = -cososim;
-            f[i] = h[i] - tau/4/h_x*h[i]*(cv[i+1] - cv[i-1]) + tau*otlad_func(tau*n, double(i)/M*p_gas.Segm_X);
+            f[i] = h[i] - tau/4/h_x*h[i]*(cv[i+1] - cv[i-1]) + tau*otlad_func(tau*(n-1), h_x*i);
         }
-        f[M-1] = h[M-1] - tau/4/h_x*h[M-1]*(cv[M] - cv[M-2]) + tau*otlad_func(tau*n, double(M-1)/M*p_gas.Segm_X); //не заполнится в цикле
-        ch[M-1] = 1;
+        ch[M] = 1 - (tau/2/h_x)*cv[M];
+        a[M] = tau/2/h_x*v[M-1];
+        b[M] = 0;
+        f[M] = h[M] - tau/2/h_x*(h[M]*cv[M-1] - h[M]*cv[M] - 2*h[M-2]*v[M-2] - 2*h[M]*v[M] + 2.5*h[M-1]*v[M-1] + 0.5*h[M-3]*v[M-3] - 2*h[M]*v[M-2] + 2.5*h[M]*v[M-1] + 0.5*h[M]*v[M-3]) + tau*otlad_func(tau*(n-1), M*h_x);
         progonka(M+1, a, b, ch, f);
+        //printf("h[0] = %le, h[M] = %le\n", ch[0], ch[M]);
+        double *cv2 = res2;
+        double *ch2 = res2 + (M+1);
+        for (int j = 0; j <= M; j++) {
+            cv2[j] = u_test(n*tau, double(j)/M);
+            ch2[j] = rho_test(n*tau, double(j)/M);
+        }
 
-        v = cv;
-        h = ch;
+        double c_norm = C_norm(p_she, cv, res2);
+        double l_norm = L_norm(p_she, cv, res2);
+        double w_norm = W_norm(p_she, cv, res2);
+        //printf("step = %d, c_norm = %le, l_norm = %le, w_norm = %le\n", n, c_norm, l_norm, w_norm);
+        memcpy(v, cv, (M+1)*sizeof(double));
+        memcpy(h, ch, (M+1)*sizeof(double));
     }
-
+    delete[] res2;
 }

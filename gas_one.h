@@ -36,4 +36,6 @@ int progonka(int n, double *a, double *b, double *c, const double *f);
 void solve(const P_gas &p_gas, const P_she &p_she, double *res, double *buf);
 
 //нормы
-double C_norm(P_she &p_she, double *res1, double *res2);
+double C_norm(const P_she &p_she, const double *res1, const double *res2, const int scale=1);
+double L_norm(const P_she &p_she, const double *res1, const double *res2, const int scale=1);
+double W_norm(const P_she &p_she, const double *res1, const double *res2, const int scale=1);
