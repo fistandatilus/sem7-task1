@@ -31,6 +31,7 @@ struct P_she {
 
 //метод прогонки
 int progonka(int n, double *a, double *b, double *c, const double *f);
+void check_matrix(int n, const double *a, const double *b, const double *c);
 
 //схема 1
 void solve(const P_gas &p_gas, const P_she &p_she, double *res, double *buf);

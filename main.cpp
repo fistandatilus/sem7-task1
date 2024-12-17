@@ -73,7 +73,7 @@ int main(int argc, char *argv[]) {
         double w_norm_diff = W_norm(p_she, res1, res2);
         time = (clock() - time)/CLOCKS_PER_SEC;
         printf("mode = %d, c_norm = %le, l_norm = %le, w_norm = %le, time = %.2f\n", i, c_norm_diff, l_norm_diff, w_norm_diff, time);
-/*
+
         for (int j = 1; j <= 4; j++) {
             int scale = (1u << j);
             p_she.M_x = m*scale;
@@ -94,7 +94,6 @@ int main(int argc, char *argv[]) {
             time = (clock() - time)/CLOCKS_PER_SEC;
             printf("mode = %d, k = %d, c_norm = %le, l_norm = %le, w_norm = %le, time = %.2f\n", i, j, c_norm, l_norm, w_norm, time);
         }
-        */
     }
     delete[] res1;
     delete[] res2;
