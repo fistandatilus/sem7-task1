@@ -121,8 +121,8 @@ void solve(const P_gas &p_gas, const P_she &p_she, double *res, double *buf) {
             a[i+1] = -cososim;
             f[i] = h[i] - tau/4/h_x*h[i]*(cv[i+1] - cv[i-1]) + tau*otlad_func(tau*(n-1), h_x*i);
         }
-        ch[M] = 1 - (tau/2/h_x)*cv[M];
-        a[M] = tau/2/h_x*v[M-1];
+        ch[M] = 1 + (tau/2/h_x)*cv[M];
+        a[M] = -tau/2/h_x*v[M-1];
         b[M] = 0;
         f[M] = h[M] - tau/2/h_x*(-h[M]*cv[M-1] + h[M]*cv[M] + 2*h[M]*v[M] - 2.5*h[M-1]*v[M-1] + 2*h[M-2]*v[M-2] - 0.5*h[M-3]*v[M-3] - 2.5*h[M]*v[M-1] + 2*h[M]*v[M-2] - 0.5*h[M]*v[M-3]) + tau*otlad_func(tau*(n-1), M*h_x);
         progonka(M+1, a, b, ch, f);
