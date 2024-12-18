@@ -1,80 +1,6 @@
-
-\documentclass[12pt,a4paper]{article}
-\usepackage[utf8]{inputenc}
-\usepackage[OT1]{fontenc}
-\usepackage[russian]{babel}
-\usepackage{amsmath}
-\usepackage{amsfonts}
-\usepackage{amssymb}
-\usepackage[left=2cm,right=2cm,top=2cm,bottom=2cm]{geometry}
-\author{Борисенков Никита Николаевич}
-\title{Отчёт}
-
-\newcommand{\xo}{\mathring{x}}
-\newcommand{\xx}{x\overline{x}}
-\newcommand{\pd}[2]{\dfrac{\partial #1}{\partial #2}}
-\DeclareMathOperator*{\mmax}{max}
-
-\begin{document}
-\maketitle
-\section{Постановка задачи}
-
-Решается задача моделирования теплопроводного вязкого баротропного газа.
-
-$$
-\begin{array}{rcl}
-    \pd{\rho}{t} + \pd{\rho u}{x} & = & 0\\
-    \pd{\rho u}{t} + \pd{\rho u^2}{x} + \pd{p}{x} & = & \mu\pd{^2 u}{x^2} + \rho f
-\end{array}
-$$
-
-\section{Алгоритм}
-
-Используется последовательная схема с центральными разностями ($u, \rho$)
-
-Уравнения, задающие схему выглядят следующим образом:
-$$
-\begin{array}{lc}
-    V_t + \frac13 \left( V\hat{V}_{\xo} + \left( V\hat{V} \right)_{\xo} \right) + \dfrac{p\left(H\right)_{\xo}}{H} = \tilde{\mu}\hat{V}_{\xx} - \left( \tilde{\mu} - \dfrac{\mu}{H} \right)V_{\xx}, & x \in \omega_h, \\
-
-    H_t + 0,\!5 \left(  \hat{V}\hat{H}_{\xo} + \left(\hat{V}\hat{H}\right)_{\xo} H\hat{V}_{\xo}\right) = 0, & x \in \omega_h, \\
-
-    H_{t,0} + 0,\!5\left(\left(\hat{V}\hat{H}\right)_{x,0} + H_0\hat{V}_{x,0}\right) - & \\
-    - 0,\!5h\left(\left(HV\right)_{\xx,1} - 0,\!5\left(HV\right)_{\xx,2} + H_0\left(V_{\xx,1} - 0,\!5V_{\xx,2}\right)\right) = 0, & \\
-
-    H_{t,M} + 0,\!5\left(\left(\hat{V}\hat{H}\right)_{x,M} + H_0\hat{V}_{x,M}\right) + & \\
-    + 0,\!5h\left(\left(HV\right)_{\xx,M-1} - 0,\!5\left(HV\right)_{\xx,M-2} + H_0\left(V_{\xx,M-1} - 0,\!5V_{\xx,M-2}\right)\right) = 0, & \\
-
-\end{array}
-$$
-где $\tilde{\mu} = \displaystyle\max_{m} \dfrac{\mu}{H}$.
-
-По этим уравнениям сначала строится СЛУ на значения $V$ на следующеми слое, которое решается методом прогонки, а с использованием полученных значений $\hat{V}$ строится и решается СЛУ на $\hat{H}$
-
-После преобразований, СЛУ схемы имеют следующий вид:
-
-
-\section{Отладочный тест}
-
-Для проверки правильности написанной схемы, она применялась с начальными условиями и правыми частями, соответствующими следующим гладким решениям:
-\begin{equation*}
-    \rho(t, x) = e^t(\cos(3\pi x) + 1,\!5), u(t, x) = \cos(2\pi t)\sin(4\pi x)
-\end{equation*}
-
-Соответствующие правые части выглядят следующим образом:
-\begin{gather*}
-    f (t, x) = -2\pi \sin(2\pi t)\sin(4\pi x) + 4\pi\cos^2(2\pi t)\sin(4\pi x) - \\
-    - \dfrac{p'(e^t(cos(3\pi x) - 1\!,5))(4\pi)\sin(4\pi x)}{cos(4\pi x) + 1,\!5} + \dfrac{16\mu\pi^2\cos(2\pi t)\sin(4\pi x)
-}{e^t(\cos(3\pi x) + 1,\!5)}   \\
-    f_0 (t, x) = e^t(\cos(3\pi x) + 1,\!5) + (-\cos(2\pi t)\sin(4\pi x)e^t3\pi\sin(3\pi x) +\\
-    + e^t(\cos(3\pi x) + 1,\!5)\cos(2\pi t)4\pi\cos(4\pi x))
-\end{gather*}
-
-В следующих таблицах приведены результаты работы программы при разных значениях параметров схемы и задачи.
-
 \begin{tabular}{ |l|l|l|l|l| }
 \hline
-\multicolumn{5}{|c|}{$\mu = 0.1, p(\rho)  = \rho$}\\
+\multicolumn{5}{|c|}{$\mu = 0.1, p(\rho)  = \rho} \\
 \hline
 $\tau\setminus h$ & $0.1$ & $0.01$ & $0.001$ & $0.0001$\\
 \hline
@@ -103,7 +29,7 @@ $0.0001$ & $1.650815e+41$ & $2.170155e-02$ & $7.575357e-03$ & $7.434620e-03$ \\
 
 \begin{tabular}{ |l|l|l|l|l| }
 \hline
-\multicolumn{5}{|c|}{$\mu = 0.1, p(\rho)  = 10\rho$}\\
+\multicolumn{5}{|c|}{$\mu = 0.1, p(\rho)  = 10\rho} \\
 \hline
 $\tau\setminus h$ & $0.1$ & $0.01$ & $0.001$ & $0.0001$\\
 \hline
@@ -132,7 +58,7 @@ $0.0001$ & $2.438901e+00$ & $5.022723e-03$ & $7.443231e-04$ & $7.842556e-04$ \\
 
 \begin{tabular}{ |l|l|l|l|l| }
 \hline
-\multicolumn{5}{|c|}{$\mu = 0.1, p(\rho)  = 100\rho$}\\
+\multicolumn{5}{|c|}{$\mu = 0.1, p(\rho)  = 100\rho} \\
 \hline
 $\tau\setminus h$ & $0.1$ & $0.01$ & $0.001$ & $0.0001$\\
 \hline
@@ -161,7 +87,7 @@ $0.0001$ & $0.000000e+00$ & $4.545472e-03$ & $1.873016e-04$ & $2.227625e-04$ \\
 
 \begin{tabular}{ |l|l|l|l|l| }
 \hline
-\multicolumn{5}{|c|}{$\mu = 0.1, p(\rho)  = \rho^{1.4}$} \\
+\multicolumn{5}{|c|}{$\mu = 0.1, p(\rho)  = \rho^{1.4}} \\
 \hline
 $\tau\setminus h$ & $0.1$ & $0.01$ & $0.001$ & $0.0001$\\
 \hline
@@ -190,7 +116,7 @@ $0.0001$ & $0.000000e+00$ & $6.351734e-03$ & $1.815963e-03$ & $1.829277e-03$ \\
 
 \begin{tabular}{ |l|l|l|l|l| }
 \hline
-\multicolumn{5}{|c|}{$\mu = 0.01, p(\rho)  = \rho$}\\
+\multicolumn{5}{|c|}{$\mu = 0.01, p(\rho)  = \rho} \\
 \hline
 $\tau\setminus h$ & $0.1$ & $0.01$ & $0.001$ & $0.0001$\\
 \hline
@@ -219,7 +145,7 @@ $0.0001$ & $1.395295e+09$ & $1.541054e-02$ & $3.955590e-03$ & $3.897991e-03$ \\
 
 \begin{tabular}{ |l|l|l|l|l| }
 \hline
-\multicolumn{5}{|c|}{$\mu = 0.01, p(\rho)  = 10\rho$}\\
+\multicolumn{5}{|c|}{$\mu = 0.01, p(\rho)  = 10\rho} \\
 \hline
 $\tau\setminus h$ & $0.1$ & $0.01$ & $0.001$ & $0.0001$\\
 \hline
@@ -248,7 +174,7 @@ $0.0001$ & $4.292249e+108$ & $4.465818e-03$ & $5.030870e-04$ & $5.267168e-04$ \\
 
 \begin{tabular}{ |l|l|l|l|l| }
 \hline
-\multicolumn{5}{|c|}{$\mu = 0.01, p(\rho)  = 100\rho$}\\
+\multicolumn{5}{|c|}{$\mu = 0.01, p(\rho)  = 100\rho} \\
 \hline
 $\tau\setminus h$ & $0.1$ & $0.01$ & $0.001$ & $0.0001$\\
 \hline
@@ -277,7 +203,7 @@ $0.0001$ & $0.000000e+00$ & $0.000000e+00$ & $0.000000e+00$ & $0.000000e+00$ \\
 
 \begin{tabular}{ |l|l|l|l|l| }
 \hline
-\multicolumn{5}{|c|}{$\mu = 0.01, p(\rho)  = \rho^{1.4}$} \\
+\multicolumn{5}{|c|}{$\mu = 0.01, p(\rho)  = \rho^{1.4}} \\
 \hline
 $\tau\setminus h$ & $0.1$ & $0.01$ & $0.001$ & $0.0001$\\
 \hline
@@ -306,7 +232,7 @@ $0.0001$ & $0.000000e+00$ & $5.841959e-03$ & $6.277915e-04$ & $6.547340e-04$ \\
 
 \begin{tabular}{ |l|l|l|l|l| }
 \hline
-\multicolumn{5}{|c|}{$\mu = 0.001, p(\rho)  = \rho$}\\
+\multicolumn{5}{|c|}{$\mu = 0.001, p(\rho)  = \rho} \\
 \hline
 $\tau\setminus h$ & $0.1$ & $0.01$ & $0.001$ & $0.0001$\\
 \hline
@@ -335,7 +261,7 @@ $0.0001$ & $inf$ & $3.427876e-02$ & $9.204818e-03$ & $9.406187e-03$ \\
 
 \begin{tabular}{ |l|l|l|l|l| }
 \hline
-\multicolumn{5}{|c|}{$\mu = 0.001, p(\rho)  = 10\rho$}\\
+\multicolumn{5}{|c|}{$\mu = 0.001, p(\rho)  = 10\rho} \\
 \hline
 $\tau\setminus h$ & $0.1$ & $0.01$ & $0.001$ & $0.0001$\\
 \hline
@@ -364,7 +290,7 @@ $0.0001$ & $inf$ & $4.821690e-03$ & $0.000000e+00$ & $0.000000e+00$ \\
 
 \begin{tabular}{ |l|l|l|l|l| }
 \hline
-\multicolumn{5}{|c|}{$\mu = 0.001, p(\rho)  = 100\rho$}\\
+\multicolumn{5}{|c|}{$\mu = 0.001, p(\rho)  = 100\rho} \\
 \hline
 $\tau\setminus h$ & $0.1$ & $0.01$ & $0.001$ & $0.0001$\\
 \hline
@@ -393,7 +319,7 @@ $0.0001$ & $0.000000e+00$ & $0.000000e+00$ & $0.000000e+00$ & $0.000000e+00$ \\
 
 \begin{tabular}{ |l|l|l|l|l| }
 \hline
-\multicolumn{5}{|c|}{$\mu = 0.001, p(\rho)  = \rho^{1.4}$} \\
+\multicolumn{5}{|c|}{$\mu = 0.001, p(\rho)  = \rho^{1.4}} \\
 \hline
 $\tau\setminus h$ & $0.1$ & $0.01$ & $0.001$ & $0.0001$\\
 \hline
@@ -418,7 +344,3 @@ $0.0001$ & $0.000000e+00$ & $1.214603e-02$ & $7.068291e-04$ & $7.621502e-04$ \\
 & $1.918500e-02$ & $2.108440e-01$ & $2.027774e+00$ & $2.051193e+01$ \\
 \hline
 \end{tabular}
-
-
-
-\end{document}
