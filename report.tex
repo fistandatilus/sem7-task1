@@ -1,0 +1,44 @@
+
+\documentclass[12pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[OT1]{fontenc}
+\usepackage[russian]{babel}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage[left=2cm,right=2cm,top=2cm,bottom=2cm]{geometry}
+\author{Борисенков Никита Николаевич}
+\title{Отчёт}
+
+\newcommand{\xo}{\mathring{x}}
+\newcommand{\xx}{x\overline{x}}
+\DeclareMathOperator*{\mmax}{max}
+
+\begin{document}
+\maketitle
+\section{Постановка задачи}
+
+Решается задача моделирования теплопроводного баротропного газа.
+
+\section{Алгоритм}
+
+Используется последовательная схема с центральными разностями ($u, \rho$)
+
+Уравнения, задающие схему выглядят следующим образом:
+$$
+\begin{array}{lc}
+    V_t + \frac13 \left( V\hat{V}_{\xo} + \left( V\hat{V} \right)_{\xo} \right) + \dfrac{p\left(H\right)_{\xo}}{H} = \tilde{\mu}\hat{V}_{\xx} - \left( \tilde{\mu} - \dfrac{\mu}{H} \right)V_{\xx}, & x \in \omega_h, \\
+
+    H_t + 0,\!5 \left(  \hat{V}\hat{H}_{\xo} + \left(\hat{V}\hat{H}\right)_{\xo} H\hat{V}_{\xo}\right) = 0, & x \in \omega_h, \\
+
+    H_{t,0} + 0,\!5\left(\left(\hat{V}\hat{H}\right)_{x,0} + H_0\hat{V}_{x,0}\right) - & \\
+    - 0,\!5h\left(\left(HV\right)_{\xx,1} - 0,\!5\left(HV\right)_{\xx,2} + H_0\left(V_{\xx,1} - 0,\!5V_{\xx,2}\right)\right) = 0, & \\
+
+    H_{t,M} + 0,\!5\left(\left(\hat{V}\hat{H}\right)_{x,M} + H_0\hat{V}_{x,M}\right) + & \\
+    + 0,\!5h\left(\left(HV\right)_{\xx,M-1} - 0,\!5\left(HV\right)_{\xx,M-2} + H_0\left(V_{\xx,M-1} - 0,\!5V_{\xx,M-2}\right)\right) = 0, & \\
+
+    \tilde{\mu} = \mmax_{m} \dfrac{\mu}{H} & \\
+\end{array}
+$$
+
+\end{document}

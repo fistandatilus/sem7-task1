@@ -6,6 +6,8 @@ a.out: $(patsubst %.cpp, %.o,$(wildcard *.cpp))
 	g++ $^ $(CPPFLAGS) -o $@
 %.o: %.cpp *.h
 	g++ -c $< $(CPPFLAGS)
+report: report.tex #*.png
+	pdflatex report.tex
 clean:
 	rm -f *.out *.o *.zip
 ready: clean
