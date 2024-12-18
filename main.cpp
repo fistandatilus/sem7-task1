@@ -4,7 +4,7 @@
 #include "gas_one.h"
 
 int main(int argc, char *argv[]) {
-//    feenableexcept(FE_ALL_EXCEPT ^ FE_INEXACT);
+    //feenableexcept(FE_ALL_EXCEPT ^ FE_INEXACT);
     int n, m;
     double mu;
     if (!(argc == 4 && sscanf(argv[1], "%d", &n) == 1 && sscanf(argv[2], "%d", &m) == 1 && sscanf(argv[3], "%lf", &mu) == 1)) {
@@ -32,7 +32,6 @@ int main(int argc, char *argv[]) {
     p_gas.mu = mu;
     p_gas.f_0 = f_0_test;
 
-   
     for (int i = 0; i < 4; i++) {
         double *cv = res2;
         double *ch = res2 + (m+1);
@@ -94,6 +93,7 @@ int main(int argc, char *argv[]) {
             time = (clock() - time)/CLOCKS_PER_SEC;
             printf("mode = %d, k = %d, c_norm = %le, l_norm = %le, w_norm = %le, time = %.2f\n", i, j, c_norm, l_norm, w_norm, time);
         }
+
     }
     delete[] res1;
     delete[] res2;

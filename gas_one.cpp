@@ -7,7 +7,6 @@
 
 int progonka(int n, double *a, double *b, double *c, const double *f) {
     double pa = a[0], pb = b[0];
-    check_matrix(n, a, b, c);
 
     for (int i = 1; i < n; i++){
         double ca, cb, denominator;
@@ -92,13 +91,19 @@ void solve(const P_gas &p_gas, const P_she &p_she, double *res, double *buf) {
         double cososim;
         for (int i = 1; i <= M-1; i++) {
             cv[i] = 1 + 2*frac;
-            b[i] = tau/(6*h_x)*(v[i] + v[i+1]) - frac;
-            a[i] = -tau/(6*h_x)*(v[i-1] + v[i])  - frac;
+            a[i] = -tau/6/h_x*(v[i-1] + v[i]) - frac;
+            b[i] =  tau/6/h_x*(v[i] + v[i+1]) - frac;
             f[i] = v[i] + tau*(-(ph[i+1] - ph[i-1])/2/h_x/h[i] - (mu_loc - mu/h[i])*(v[i+1] - 2*v[i] + v[i-1])/h_x/h_x + func(tau*(n-1), i*h_x, mu));
         }
-        a[1] = 0;
-        b[M-1] = 0;
-        progonka(M-1, a+1, b+1, cv+1, f+1);
+        cv[0] = 1;
+        a[0] = 0;
+        b[0] = 0;
+        f[0] = 0;
+        cv[M] = 1;
+        a[M] = 0;
+        b[M] = 0;
+        f[M] = 0;
+        progonka(M+1, a, b, cv, f);
         cv[0] = 0;
         cv[M] = 0;
         //for (int i = 0; i <= M; i++) printf("cv = %le, f = %le %d\n", cv[i], f[i], i);
@@ -108,7 +113,7 @@ void solve(const P_gas &p_gas, const P_she &p_she, double *res, double *buf) {
         b[0] = tau/2/h_x*cv[1];
         a[0] = 0;
         a[1] = -tau/4/h_x*(cv[0] + cv[1]);
-        f[0] = h[0] - tau/2/h_x*(h[0]*(cv[1] - cv[0] - 2*v[0] - 2*v[2] + 2.5*v[1] + 0.5*v[3]) + 2.5*h[1]*v[1] - 2*h[2]*v[2] + 0.5*h[3]*v[3]) + tau*otlad_func(tau*n, 0);
+        f[0] = h[0] - tau/2/h_x*(h[0]*cv[1] - h[0]*cv[0] - (2*h[0]*v[0] - 2.5*h[1]*v[1] + 2*h[2]*v[2] - 0.5*h[3]*v[3] - 2.5*h[0]*v[1] + 2*h[0]*v[2] - 0.5*h[0]*v[3])) + tau*otlad_func(tau*(n-1), 0);
         for (int i = 1; i <= M-1; i++) {
             ch[i] = 1;
             cososim = tau/4/h_x*(cv[i] + cv[i+1]);
@@ -119,9 +124,10 @@ void solve(const P_gas &p_gas, const P_she &p_she, double *res, double *buf) {
         ch[M] = 1 - (tau/2/h_x)*cv[M];
         a[M] = tau/2/h_x*v[M-1];
         b[M] = 0;
-        f[M] = h[M] + tau/2/h_x*(-(h[M]*cv[M-1] - h[M]*cv[M]) - 2*h[M-2]*v[M-2] - 2*h[M]*v[M] + 2.5*h[M-1]*v[M-1] + 0.5*h[M-3]*v[M-3] - 2*h[M]*v[M-2] + 2.5*h[M]*v[M-1] + 0.5*h[M]*v[M-3]) + tau*otlad_func(tau*n, M*h_x);
+        f[M] = h[M] - tau/2/h_x*(-h[M]*cv[M-1] + h[M]*cv[M] + 2*h[M]*v[M] - 2.5*h[M-1]*v[M-1] + 2*h[M-2]*v[M-2] - 0.5*h[M-3]*v[M-3] - 2.5*h[M]*v[M-1] + 2*h[M]*v[M-2] - 0.5*h[M]*v[M-3]) + tau*otlad_func(tau*(n-1), M*h_x);
         progonka(M+1, a, b, ch, f);
         //printf("h[0] = %le, h[M] = %le\n", ch[0], ch[M]);
+        /*
         double *cv2 = res2;
         double *ch2 = res2 + (M+1);
         for (int j = 0; j <= M; j++) {
@@ -132,7 +138,8 @@ void solve(const P_gas &p_gas, const P_she &p_she, double *res, double *buf) {
         double c_norm = C_norm(p_she, cv, res2);
         double l_norm = L_norm(p_she, cv, res2);
         double w_norm = W_norm(p_she, cv, res2);
-        //printf("step = %d, c_norm = %le, l_norm = %le, w_norm = %le\n", n, c_norm, l_norm, w_norm);
+        printf("step = %d, c_norm = %le, l_norm = %le, w_norm = %le\n", n, c_norm, l_norm, w_norm);
+        */
         memcpy(v, cv, (M+1)*sizeof(double));
         memcpy(h, ch, (M+1)*sizeof(double));
     }
