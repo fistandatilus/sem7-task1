@@ -35,16 +35,15 @@ $$
 Уравнения, задающие схему выглядят следующим образом:
 $$
 \begin{array}{lc}
-    V_t + \frac13 \left( V\hat{V}_{\xo} + \left( V\hat{V} \right)_{\xo} \right) + \dfrac{p\left(H\right)_{\xo}}{H} = \tilde{\mu}\hat{V}_{\xx} - \left( \tilde{\mu} - \dfrac{\mu}{H} \right)V_{\xx}, & x \in \omega_h, \\
+    V_t + \frac13 \left( V\hat{V}_{\xo} + \left( V\hat{V} \right)_{\xo} \right) + \dfrac{p\left(H\right)_{\xo}}{H} = \tilde{\mu}\hat{V}_{\xx} - \left( \tilde{\mu} - \dfrac{\mu}{H} \right)V_{\xx} + f, & x \in \omega_h, \\
 
-    H_t + 0,\!5 \left(  \hat{V}\hat{H}_{\xo} + \left(\hat{V}\hat{H}\right)_{\xo} H\hat{V}_{\xo}\right) = 0, & x \in \omega_h, \\
+    H_t + 0,\!5 \left(  \hat{V}\hat{H}_{\xo} + \left(\hat{V}\hat{H}\right)_{\xo} + H\hat{V}_{\xo}\right) = f_0, & x \in \omega_h, \\
 
     H_{t,0} + 0,\!5\left(\left(\hat{V}\hat{H}\right)_{x,0} + H_0\hat{V}_{x,0}\right) - & \\
-    - 0,\!5h\left(\left(HV\right)_{\xx,1} - 0,\!5\left(HV\right)_{\xx,2} + H_0\left(V_{\xx,1} - 0,\!5V_{\xx,2}\right)\right) = 0, & \\
+    - 0,\!5h\left(\left(HV\right)_{\xx,1} - 0,\!5\left(HV\right)_{\xx,2} + H_0\left(V_{\xx,1} - 0,\!5V_{\xx,2}\right)\right) = f_0, & \\
 
     H_{t,M} + 0,\!5\left(\left(\hat{V}\hat{H}\right)_{x,M} + H_0\hat{V}_{x,M}\right) + & \\
-    + 0,\!5h\left(\left(HV\right)_{\xx,M-1} - 0,\!5\left(HV\right)_{\xx,M-2} + H_0\left(V_{\xx,M-1} - 0,\!5V_{\xx,M-2}\right)\right) = 0, & \\
-
+    + 0,\!5h\left(\left(HV\right)_{\xx,M-1} - 0,\!5\left(HV\right)_{\xx,M-2} + H_0\left(V_{\xx,M-1} - 0,\!5V_{\xx,M-2}\right)\right) = f_0, & 
 \end{array}
 $$
 где $\tilde{\mu} = \displaystyle\max_{m} \dfrac{\mu}{H}$.
@@ -52,7 +51,15 @@ $$
 По этим уравнениям сначала строится СЛУ на значения $V$ на следующеми слое, которое решается методом прогонки, а с использованием полученных значений $\hat{V}$ строится и решается СЛУ на $\hat{H}$
 
 После преобразований, СЛУ схемы имеют следующий вид:
-
+\begin{gather*}
+    V_{m-1}^{n+1}\left(-\dfrac{\tau\tilde{\mu}}{h^2}-\dfrac{\tau(V_{m}^n + V_{m-1}^n)}{6h}\right) + 
+    V_{m}^{n+1}\left(1+\dfrac{2\tau\tilde{\mu}}{h^2}\right) +
+    V_{m+1}^{n+1}\left(-\dfrac{\tau\tilde{\mu}}{h^2}+\dfrac{\tau(V_{m}^{n} + V_{m+1}^{n})}{6h} \right)= \\ =
+    V_{m}^n-\dfrac{\tau(p(H_{m+1}^{n}) - p(H_{m-1}^n))}{2hH_m^n} -
+    \left( \tilde{\mu} - \dfrac{\mu}{H_m^n} \right) \dfrac{V_{m-1}^n - 2V_{m}^n + V_{m+1}^n}{h^2} \\
+    H_{m-1}^{n}
+    H_{m}^{n}
+\end{gather*}
 
 \section{Отладочный тест}
 
