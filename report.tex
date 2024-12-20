@@ -35,20 +35,20 @@ $$
 Уравнения, задающие схему выглядят следующим образом:
 $$
 \begin{array}{lc}
-    V_t + \frac13 \left( V\hat{V}_{\xo} + \left( V\hat{V} \right)_{\xo} \right) + \dfrac{p\left(H\right)_{\xo}}{H} = \tilde{\mu}\hat{V}_{\xx} - \left( \tilde{\mu} - \dfrac{\mu}{H} \right)V_{\xx} + f, & x \in \omega_h, \\
+    V_t + \frac13 \left( V\hat{V}_{\xo} + ( V\hat{V} )_{\xo} \right) + \dfrac{p\left(H\right)_{\xo}}{H} = \tilde{\mu}\hat{V}_{\xx} - \left( \tilde{\mu} - \dfrac{\mu}{H} \right)V_{\xx} + f, & x \in \omega_h, \\
 
-    H_t + 0,\!5 \left(  \hat{V}\hat{H}_{\xo} + \left(\hat{V}\hat{H}\right)_{\xo} + H\hat{V}_{\xo}\right) = f_0, & x \in \omega_h, \\
+    H_t + 0,\!5 \left(  \hat{V}\hat{H}_{\xo} + (\hat{V}\hat{H})_{\xo} + H\hat{V}_{\xo}\right) = f_0, & x \in \omega_h, \\
 
-    H_{t,0} + 0,\!5\left(\left(\hat{V}\hat{H}\right)_{x,0} + H_0\hat{V}_{x,0}\right) - & \\
+    H_{t,0} + 0,\!5\left((\hat{V}\hat{H})_{x,0} + H_0\hat{V}_{x,0}\right) - & \\
     - 0,\!5h\left(\left(HV\right)_{\xx,1} - 0,\!5\left(HV\right)_{\xx,2} + H_0\left(V_{\xx,1} - 0,\!5V_{\xx,2}\right)\right) = f_0, & \\
 
-    H_{t,M} + 0,\!5\left(\left(\hat{V}\hat{H}\right)_{x,M} + H_0\hat{V}_{x,M}\right) + & \\
+    H_{t,M} + 0,\!5\left((\hat{V}\hat{H})_{\overline{x},M} + H_0\hat{V}_{\overline{x},M}\right) + & \\
     + 0,\!5h\left(\left(HV\right)_{\xx,M-1} - 0,\!5\left(HV\right)_{\xx,M-2} + H_0\left(V_{\xx,M-1} - 0,\!5V_{\xx,M-2}\right)\right) = f_0, & 
 \end{array}
 $$
 где $\tilde{\mu} = \displaystyle\max_{m} \dfrac{\mu}{H}$.
 
-По этим уравнениям сначала строится СЛУ на значения $V$ на следующеми слое, которое решается методом прогонки, а с использованием полученных значений $\hat{V}$ строится и решается СЛУ на $\hat{H}$
+По этим уравнениям сначала строится СЛУ на значения $V$ на следующеми слое, которое решается методом прогонки, а с использованием полученных значений $\hat{V}$ строится и решается СЛУ на $\hat{H}$.
 
 После преобразований, СЛУ схемы имеют следующий вид:
 \begin{gather*}
@@ -56,9 +56,20 @@ $$
     V_{m}^{n+1}\left(1+\dfrac{2\tau\tilde{\mu}}{h^2}\right) +
     V_{m+1}^{n+1}\left(-\dfrac{\tau\tilde{\mu}}{h^2}+\dfrac{\tau(V_{m}^{n} + V_{m+1}^{n})}{6h} \right)= \\ =
     V_{m}^n-\dfrac{\tau(p(H_{m+1}^{n}) - p(H_{m-1}^n))}{2hH_m^n} -
-    \left( \tilde{\mu} - \dfrac{\mu}{H_m^n} \right) \dfrac{V_{m-1}^n - 2V_{m}^n + V_{m+1}^n}{h^2} \\
-    H_{m-1}^{n}
-    H_{m}^{n}
+    \left( \tilde{\mu} - \dfrac{\mu}{H_m^n} \right) \dfrac{V_{m-1}^n - 2V_{m}^n + V_{m+1}^n}{h^2} + \tau f_m^{n}
+    , m = 1,\dots, M-1,\\
+    V_0^{n+1} = 0, V_M^{n+1} = 0, \\
+    H_{m-1}^{n+1}\dfrac{\tau}{4h}(-V_{m}^{n+1} - V_{m-1}^{n+1}) +
+    H_{m}^{n+1} +
+    H_{m+1}^{n+1}\dfrac{\tau}{4h}(V_{m}^{n+1} + V_{m+1}^{n+1}) = \\
+    = H_{m}^{n} - \tau H_{m}^{n}\left( \dfrac{V_{m+1}^{n+1} - V_{m-1}^{m+1}}{2h} \right) + \tau f_{0m}^{\phantom{0}n+1}
+    , m = 1,\dots, M-1,\\
+    H_0^{n+1}\left( 1 - \dfrac{\tau V_0^{n+1}}{2h} \right) + H_1^{n+1}\dfrac{\tau V_1^{n+1}}{2h} = \\
+    = H_0^{n} - \dfrac{\tau}{2h}(H_0^nV_1^{n+1} - H_0^nV_0^{n+1} - 2H_0^nV_0^n + 2.5H_1^nV_1^n - 2H_2^nV_2^n + 0.5H_3^nV_3^n + \\
+    + 2.5H_0^nV_1^n - 2H_0^nV_2^n + 0.5H_0^nV_3^n) + \tau f_{0,0}^{\phantom{0}n+1}, \\
+    H_{M-1}^{n+1}\left(-\dfrac{\tau V_{M-1}^{n+1}}{2h}\right) + H_M^{n+1}\left(1 + \dfrac{\tau V_M^{n+1}}{2h}\right) = \\
+    = H_M^{n} - \dfrac{\tau}{2h}(H_M^nV_M^{n+1} - H_M^nV_{M-1}^{n+1} + 2H_M^nV_M^n - 2.5H_{M-1}^nV_{M-1}^n + 2H_{M-2}^nV_{M-2}^n - 0.5H_{M-3}^nV_{M-3}^n - \\
+    - 2.5H_M^nV_{M-1}^n + 2H_M^nV_{M-2}^n - 0.5H_M^nV_{M-3}^n) + \tau f_{0,M}^{\phantom{0,}n+1}.
 \end{gather*}
 
 \section{Отладочный тест}
