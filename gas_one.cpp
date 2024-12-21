@@ -113,18 +113,18 @@ void solve(const P_gas &p_gas, const P_she &p_she, double *res, double *buf) {
         b[0] = tau/2/h_x*cv[1];
         a[0] = 0;
         a[1] = -tau/4/h_x*(cv[0] + cv[1]);
-        f[0] = h[0] - tau/2/h_x*(h[0]*cv[1] - h[0]*cv[0] - (2*h[0]*v[0] - 2.5*h[1]*v[1] + 2*h[2]*v[2] - 0.5*h[3]*v[3] - 2.5*h[0]*v[1] + 2*h[0]*v[2] - 0.5*h[0]*v[3])) + tau*otlad_func(tau*(n-1), 0);
+        f[0] = h[0] - tau/2/h_x*(h[0]*cv[1] - h[0]*cv[0] - (2*h[0]*v[0] - 2.5*h[1]*v[1] + 2*h[2]*v[2] - 0.5*h[3]*v[3] - 2.5*h[0]*v[1] + 2*h[0]*v[2] - 0.5*h[0]*v[3])) + tau*otlad_func(tau*n, 0);
         for (int i = 1; i <= M-1; i++) {
             ch[i] = 1;
             cososim = tau/4/h_x*(cv[i] + cv[i+1]);
             b[i] = cososim;
             a[i+1] = -cososim;
-            f[i] = h[i] - tau/4/h_x*h[i]*(cv[i+1] - cv[i-1]) + tau*otlad_func(tau*(n-1), h_x*i);
+            f[i] = h[i] - tau/4/h_x*h[i]*(cv[i+1] - cv[i-1]) + tau*otlad_func(tau*n, h_x*i);
         }
         ch[M] = 1 + (tau/2/h_x)*cv[M];
         a[M] = -tau/2/h_x*v[M-1];
         b[M] = 0;
-        f[M] = h[M] - tau/2/h_x*(-h[M]*cv[M-1] + h[M]*cv[M] + 2*h[M]*v[M] - 2.5*h[M-1]*v[M-1] + 2*h[M-2]*v[M-2] - 0.5*h[M-3]*v[M-3] - 2.5*h[M]*v[M-1] + 2*h[M]*v[M-2] - 0.5*h[M]*v[M-3]) + tau*otlad_func(tau*(n-1), M*h_x);
+        f[M] = h[M] - tau/2/h_x*(-h[M]*cv[M-1] + h[M]*cv[M] + 2*h[M]*v[M] - 2.5*h[M-1]*v[M-1] + 2*h[M-2]*v[M-2] - 0.5*h[M-3]*v[M-3] - 2.5*h[M]*v[M-1] + 2*h[M]*v[M-2] - 0.5*h[M]*v[M-3]) + tau*otlad_func(tau*n, M*h_x);
         progonka(M+1, a, b, ch, f);
         //printf("h[0] = %le, h[M] = %le\n", ch[0], ch[M]);
         /*
