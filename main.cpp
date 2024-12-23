@@ -5,10 +5,10 @@
 
 int main(int argc, char *argv[]) {
     //feenableexcept(FE_ALL_EXCEPT ^ FE_INEXACT);
-    int n, m;
+    int n, m, mode;
     double mu;
-    if (!(argc == 4 && sscanf(argv[1], "%d", &n) == 1 && sscanf(argv[2], "%d", &m) == 1 && sscanf(argv[3], "%lf", &mu) == 1)) {
-        printf("program usage: %s N M mu\n", argv[0]);
+    if (!(argc == 5 && sscanf(argv[1], "%d", &n) == 1 && sscanf(argv[2], "%d", &m) == 1 && sscanf(argv[3], "%lf", &mu) == 1 && sscanf(argv[4], "%d", &mu) == 1 && mode >= 0 && mode < 4)) {
+        printf("program usage: %s N M mu mode\n", argv[0]);
         return 1;
     }
 
@@ -27,38 +27,25 @@ int main(int argc, char *argv[]) {
 
     P_gas p_gas;
     P_she p_she;
-    p_gas.Segm_T = 1;
-    p_gas.Segm_X = 1;
+    p_gas.Segm_T = 100;
+    p_gas.Segm_X = 10;
     p_gas.mu = mu;
-    p_gas.f_0 = f_0_test;
-
-    for (int i = 2; i < 3; i++) {
-        double *cv = res2;
-        double *ch = res2 + (m+1);
-        for (int j = 0; j <= m; j++) {
-            cv[j] = u_test(1, double(j)/m);
-            ch[j] = rho_test(1, double(j)/m);
-        }
-
-        p_gas.p_mode = i;
-        switch (i) {
-            case 0:
-                p_gas.p_ro = 1;
-                p_gas.f = f_test_0;
-                break;
-            case 1:
-                p_gas.p_ro = 10;
-                p_gas.f = f_test_1;
-                break;
-            case 2:
-                p_gas.p_ro = 100;
-                p_gas.f = f_test_2;
-                break;
-            case 3:
-                p_gas.p_gamma = GAMMA;
-                p_gas.f = f_test_poc;
-                break;
-        };
+    p_gas.f = f;
+    p_gas.p_mode = mode;
+    switch (mode) {
+        case 0:
+            p_gas.p_ro = 1;
+            break;
+        case 1:
+            p_gas.p_ro = 10;
+            break;
+        case 2:
+            p_gas.p_ro = 100;
+            break;
+        case 3:
+            p_gas.p_gamma = GAMMA;
+            break;
+    };
 
         p_she.M_x = m;
         p_she.N = n;

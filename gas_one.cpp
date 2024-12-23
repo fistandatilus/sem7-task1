@@ -42,7 +42,6 @@ void solve(const P_gas &p_gas, const P_she &p_she, double *res, double *buf) {
     int N = p_she.N;
     int dim = p_she.Dim;
     auto func = p_gas.f;
-    auto otlad_func = p_gas.f_0;
     double mu_loc;
     double *res2 = new double[2*(M+1)];
 
@@ -59,8 +58,8 @@ void solve(const P_gas &p_gas, const P_she &p_she, double *res, double *buf) {
     //начальные данные
     //пока захардкожу
     for (int i = 0; i <= M; i++) {
-        v[i] = u_test(0, i*h_x);
-        h[i] = rho_test(0, i*h_x);
+        v[i] = u_1(0, i*h_x);
+        h[i] = rho_1(0, i*h_x);
     }
     
     for(int n = 1; n <= N; n++) {
@@ -113,26 +112,26 @@ void solve(const P_gas &p_gas, const P_she &p_she, double *res, double *buf) {
         b[0] = tau/2/h_x*cv[1];
         a[0] = 0;
         a[1] = -tau/4/h_x*(cv[0] + cv[1]);
-        f[0] = h[0] - tau/2/h_x*(h[0]*cv[1] - h[0]*cv[0] - (2*h[0]*v[0] - 2.5*h[1]*v[1] + 2*h[2]*v[2] - 0.5*h[3]*v[3] - 2.5*h[0]*v[1] + 2*h[0]*v[2] - 0.5*h[0]*v[3])) + tau*otlad_func(tau*(n-1), 0);
+        f[0] = h[0] - tau/2/h_x*(h[0]*cv[1] - h[0]*cv[0] - (2*h[0]*v[0] - 2.5*h[1]*v[1] + 2*h[2]*v[2] - 0.5*h[3]*v[3] - 2.5*h[0]*v[1] + 2*h[0]*v[2] - 0.5*h[0]*v[3]));
         for (int i = 1; i <= M-1; i++) {
             ch[i] = 1;
             cososim = tau/4/h_x*(cv[i] + cv[i+1]);
             b[i] = cososim;
             a[i+1] = -cososim;
-            f[i] = h[i] - tau/4/h_x*h[i]*(cv[i+1] - cv[i-1]) + tau*otlad_func(tau*(n-1), h_x*i);
+            f[i] = h[i] - tau/4/h_x*h[i]*(cv[i+1] - cv[i-1]);
         }
         ch[M] = 1 + (tau/2/h_x)*cv[M];
         a[M] = -tau/2/h_x*v[M-1];
         b[M] = 0;
-        f[M] = h[M] - tau/2/h_x*(-h[M]*cv[M-1] + h[M]*cv[M] + 2*h[M]*v[M] - 2.5*h[M-1]*v[M-1] + 2*h[M-2]*v[M-2] - 0.5*h[M-3]*v[M-3] - 2.5*h[M]*v[M-1] + 2*h[M]*v[M-2] - 0.5*h[M]*v[M-3]) + tau*otlad_func(tau*(n-1), M*h_x);
+        f[M] = h[M] - tau/2/h_x*(-h[M]*cv[M-1] + h[M]*cv[M] + 2*h[M]*v[M] - 2.5*h[M-1]*v[M-1] + 2*h[M-2]*v[M-2] - 0.5*h[M-3]*v[M-3] - 2.5*h[M]*v[M-1] + 2*h[M]*v[M-2] - 0.5*h[M]*v[M-3]);
         progonka(M+1, a, b, ch, f);
         //printf("h[0] = %le, h[M] = %le\n", ch[0], ch[M]);
         /*
         double *cv2 = res2;
         double *ch2 = res2 + (M+1);
         for (int j = 0; j <= M; j++) {
-            cv2[j] = u_test(n*tau, double(j)/M);
-            ch2[j] = rho_test(n*tau, double(j)/M);
+            cv2[j] = u_1(n*tau, double(j)/M);
+            ch2[j] = rho_1(n*tau, double(j)/M);
         }
 
         double c_norm = C_norm(p_she, cv, res2);
