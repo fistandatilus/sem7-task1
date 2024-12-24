@@ -18,12 +18,23 @@ struct P_gas {
 
 //Параметры схемы
 struct P_she {
-    int M_x;
-    int N;
-    int Dim;
-    double h_x;
-    double tau;
-    double eta;
+    int M_x = 0;
+    //Для задачи 1 N - число разбиений, для отсальных - максимум итерация и слой стабилизации
+    int N = 0;
+    int Dim = 0;
+    double h_x = 0;
+    double tau = 0;
+    double eps = 0;
+
+    P_she() = default;
+    P_she(P_she &a) {
+        M_x = a.M_x;
+        N = a.N;
+        Dim = a.Dim;
+        h_x = a.h_x;
+        tau = a.tau;
+        eps = a.eps;
+    }
 };
 
 
@@ -34,7 +45,7 @@ int progonka(int n, double *a, double *b, double *c, const double *f);
 void check_matrix(int n, const double *a, const double *b, const double *c);
 
 //схема
-void solve(const P_gas &p_gas, const P_she &p_she, double *res, double *buf);
+void solve(const P_gas &p_gas, const P_she &p_she, int &n, double *res, double *buf);
 
 //нормы
 double C_norm(const P_she &p_she, const double *res1, const double *res2, const int scale=1);

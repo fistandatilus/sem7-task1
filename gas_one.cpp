@@ -34,23 +34,26 @@ int progonka(int n, double *a, double *b, double *c, const double *f) {
 
 
 double stabilization_norm(const double *h, const double *v, int M) {
-    double v_norm = 0, h_norm = 0, h_av = 0;
-    for (int i = 1; i < M; i++) {
+    double v_norm = fabs(v[1]), h_av = h[1];
+    for (int i = 2; i < M; i++) {
         h_av += h[i];
-        v_norm += fabs(v[i]);
+        if (fabs(v[i]) > v_norm) v_norm = fabs(v[i]);
     }
     h_av /= M-1;
-    for (int i = 0; i <= M; i++) {
-        h_norm += fabs(h[i] - h_av);
+    double h_norm = fabs(h[0] - h_av);
+    for (int i = 1; i <= M; i++) {
+        double t = fabs(h[i] - h_av);
+        if (t > h_norm) h_norm = t;
     }
     return v_norm + h_norm;
 }
 
 
-void solve(const P_gas &p_gas, const P_she &p_she, double *res, double *buf) {
+void solve(const P_gas &p_gas, const P_she &p_she, int &n, double *res, double *buf) {
     double *a, *b, *ch, *cv, *f, *v, *h, *ph;
     double tau = p_she.tau;
     double h_x = p_she.h_x;
+    double eps = p_she.eps;
     double mu = p_gas.mu;
     int M = p_she.M_x;
     int N = p_she.N;
@@ -76,9 +79,11 @@ void solve(const P_gas &p_gas, const P_she &p_she, double *res, double *buf) {
         h[i] = rho_1(0, i*h_x);
     }
     
-    for(int n = 1; n <= N; n++) {
+    printf("eps = %e\n", eps);
+    for(n = 1; n <= N && stabilization_norm(h, v, M) > eps; n++) {
         //один шаг
         //нахождение мю с волной
+        if (n % (N/10) == 0) printf("n = %d, %e\n", n, stabilization_norm(h, v, M));
         mu_loc = mu/h[0];
         for (int i = 1; i <= M; i++) {
             double sr = mu/h[i];
@@ -119,7 +124,7 @@ void solve(const P_gas &p_gas, const P_she &p_she, double *res, double *buf) {
         progonka(M+1, a, b, cv, f);
         cv[0] = 0;
         cv[M] = 0;
-        //for (int i = 0; i <= M; i++) printf("cv = %le, f = %le %d\n", cv[i], f[i], i);
+       //for (int i = 0; i <= M; i++) printf("cv = %le, f = %le %d\n", cv[i], f[i], i);
 
         //заполнение для H
         ch[0] = 1 - (tau/2/h_x)*cv[0];
