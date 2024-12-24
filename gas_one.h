@@ -33,10 +33,13 @@ struct P_she {
 int progonka(int n, double *a, double *b, double *c, const double *f);
 void check_matrix(int n, const double *a, const double *b, const double *c);
 
-//схема 1
+//схема
 void solve(const P_gas &p_gas, const P_she &p_she, double *res, double *buf);
 
 //нормы
 double C_norm(const P_she &p_she, const double *res1, const double *res2, const int scale=1);
 double L_norm(const P_she &p_she, const double *res1, const double *res2, const int scale=1);
 double W_norm(const P_she &p_she, const double *res1, const double *res2, const int scale=1);
+
+//норма для стабилизации
+double stabilization_norm(const double *h, const double *v, int M);

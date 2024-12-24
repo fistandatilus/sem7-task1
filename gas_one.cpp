@@ -33,6 +33,20 @@ int progonka(int n, double *a, double *b, double *c, const double *f) {
 }
 
 
+double stabilization_norm(const double *h, const double *v, int M) {
+    double v_norm = 0, h_norm = 0, h_av = 0;
+    for (int i = 1; i < M; i++) {
+        h_av += h[i];
+        v_norm += fabs(v[i]);
+    }
+    h_av /= M-1;
+    for (int i = 0; i <= M; i++) {
+        h_norm += fabs(h[i] - h_av);
+    }
+    return v_norm + h_norm;
+}
+
+
 void solve(const P_gas &p_gas, const P_she &p_she, double *res, double *buf) {
     double *a, *b, *ch, *cv, *f, *v, *h, *ph;
     double tau = p_she.tau;
