@@ -75,8 +75,8 @@ void solve(const P_gas &p_gas, const P_she &p_she, int &n, double *res, double *
     //начальные данные и масса
     mass0 = 0;
     for (int i = 0; i <= M; i++) {
-        v[i] = u_1(0, i*h_x);
-        h[i] = rho_1(0, i*h_x);
+        v[i] = u_2(0, i*h_x);
+        h[i] = rho_2(0, i*h_x);
         mass0 += h[i];
     }
     
@@ -174,10 +174,9 @@ void solve(const P_gas &p_gas, const P_she &p_she, int &n, double *res, double *
                 fprintf(fp_h, "\n");
         }
         if (n%(N/4) == 0 && print) {
-            printf("i = %d\n", i);
             char name_u[1234], name_h[1234];
-            sprintf(name_u, "%d4u.dat", i);
-            sprintf(name_h, "%d4h.dat", i);
+            sprintf(name_u, "%d4u_2.dat", i);
+            sprintf(name_h, "%d4h_2.dat", i);
             i++;
             FILE *fp_u = fopen(name_u, "w");
             FILE *fp_h = fopen(name_h, "w");
@@ -193,7 +192,7 @@ void solve(const P_gas &p_gas, const P_she &p_she, int &n, double *res, double *
             norm[n/(N/4) - 1] = stab_norm;
         }
     }
-    /*
+/*    
     if (print) {
     printf("\n");
     norm[3] = stab_norm;

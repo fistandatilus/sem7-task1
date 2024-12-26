@@ -79,7 +79,7 @@ int main(int argc, char *argv[]) {
     double stab_norm = stabilization_norm(res1 + m + 1, res1, m);
     time = (clock() - time)/CLOCKS_PER_SEC;
     printf("mode = %d, n_st = %d, T_st = %f stab_norm = %le, time = %.2f\n", mode, n_st, n_st*tau, stab_norm, time);
-   /*
+/*   
     int n_st_plug = n_st;
     p_she.N = n_st/10;
     solve(p_gas, p_she, n_st_plug, res1, buf, 0);

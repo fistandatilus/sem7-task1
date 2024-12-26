@@ -34,6 +34,14 @@ double u_1(double /*t*/, double /*x*/) {
     return 0;
 }
 
+double rho_2(double /*t*/, double /*x*/) {
+    return 1;
+}
+
+double u_2(double /*t*/, double x) {
+    return (x < 4.5 || x > 5.5) ? 0 : 1;
+}
+
 double f(double /*t*/, double /*x*/, double /*mu*/) {
     return 0;
 }
