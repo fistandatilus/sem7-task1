@@ -49,7 +49,7 @@ double stabilization_norm(const double *h, const double *v, int M) {
 }
 
 
-void solve(const P_gas &p_gas, const P_she &p_she, int &n, double *res, double *buf) {
+void solve(const P_gas &p_gas, const P_she &p_she, int &n, double *res, double *buf, int print, FILE *fp_u, FILE *fp_h) {
     double *a, *b, *ch, *cv, *f, *v, *h, *ph;
     double tau = p_she.tau;
     double h_x = p_she.h_x;
@@ -59,7 +59,7 @@ void solve(const P_gas &p_gas, const P_she &p_she, int &n, double *res, double *
     int N = p_she.N;
     int dim = p_she.Dim;
     auto func = p_gas.f;
-    double mu_loc;
+    double mu_loc, mass0, mass[4], norm[4];
     double *res2 = new double[2*(M+1)];
 
     v = res;
@@ -72,18 +72,22 @@ void solve(const P_gas &p_gas, const P_she &p_she, int &n, double *res, double *
     cv = buf + 4*(M + 1);
     ch = buf + 5*(M + 1);
 
-    //начальные данные
-    //пока захардкожу
+    //начальные данные и масса
+    mass0 = 0;
     for (int i = 0; i <= M; i++) {
         v[i] = u_1(0, i*h_x);
         h[i] = rho_1(0, i*h_x);
+        mass0 += h[i];
     }
     
-    printf("eps = %e\n", eps);
-    for(n = 1; n <= N && stabilization_norm(h, v, M) > eps; n++) {
+    double stab_norm = stabilization_norm(h, v, M);
+    int i = 1;
+
+    //printf("eps = %e\n", eps);
+    for(n = 1; n <= N && stab_norm > eps; n++) {
         //один шаг
         //нахождение мю с волной
-        if (n % (N/10) == 0) printf("n = %d, %e\n", n, stabilization_norm(h, v, M));
+        //if (n % (N/10) == 0) printf("n = %d, %e\n", n, stabilization_norm(h, v, M));
         mu_loc = mu/h[0];
         for (int i = 1; i <= M; i++) {
             double sr = mu/h[i];
@@ -160,6 +164,53 @@ void solve(const P_gas &p_gas, const P_she &p_she, int &n, double *res, double *
         */
         memcpy(v, cv, (M+1)*sizeof(double));
         memcpy(h, ch, (M+1)*sizeof(double));
+        stab_norm = stabilization_norm(h, v, M);
+        if (fp_u && fp_h) {
+            for (int i = 1; i < M; i++) {
+                fprintf(fp_u, "%e ", v[i]);
+                fprintf(fp_h, "%e ", h[i]);
+            }
+                fprintf(fp_u, "\n");
+                fprintf(fp_h, "\n");
+        }
+        if (n%(N/4) == 0 && print) {
+            printf("i = %d\n", i);
+            char name_u[1234], name_h[1234];
+            sprintf(name_u, "%d4u.dat", i);
+            sprintf(name_h, "%d4h.dat", i);
+            i++;
+            FILE *fp_u = fopen(name_u, "w");
+            FILE *fp_h = fopen(name_h, "w");
+            double loc_mass = 0;
+            for (int i = 0; i <= M; i++) {
+                loc_mass += h[i];
+                fprintf(fp_u, "%e ", v[i]);
+                fprintf(fp_h, "%e ", h[i]);
+            }
+            fclose(fp_u);
+            fclose(fp_h);
+            mass[n/(N/4) - 1] = (loc_mass - mass0)/mass0;
+            norm[n/(N/4) - 1] = stab_norm;
+        }
     }
+    /*
+    if (print) {
+    printf("\n");
+    norm[3] = stab_norm;
+
+    printf("$\\|\\cdot \\|$");
+    for (int i = 0; i < 4; i++) {
+        printf("& $%e$ ", norm[i]);
+    }
+    printf("&$%f$\\\\\n\\hline\n", tau*(n-1));
+    printf("$\\triangle_{mass}$");
+    for (int i = 0; i < 4; i++) {
+        printf("& $%e$ ", mass[i]);
+    }
+    printf("&\\\\\n\\hline\n");
+    printf("\n");
+    }
+*/
     delete[] res2;
+    n--;
 }
