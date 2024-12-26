@@ -1,4 +1,45 @@
 #include "functions.h"
+
+
+// Функции для задания 3
+double rho_1(double /*t*/, double x, int k) {
+    return 2 + sin(k*M_PI*x);
+}
+
+double u_1(double /*t*/, double /*x*/, int /*k*/) {
+    return 0;
+}
+
+double rho_2(double /*t*/, double /*x*/, int /*k*/) {
+    return 1;
+}
+
+double u_2(double /*t*/, double x, int k) {
+    return sin(k*M_PI*x);
+}
+
+double f(double /*t*/, double /*x*/, double /*mu*/) {
+    return 0;
+}
+
+/*
+// Функции для задания 2
+double rho_1(double t, double x) {
+    return (x < 4.5 || x > 5.5) ? 1 : 2;
+}
+
+double u_1(double t, double x) {
+    return 0;
+}
+
+double rho_2(double t, double x) {
+    return 1;
+}
+
+double u_2(double t, double x) {
+    return (x < 4.5 || x > 5.5) ? 0 : 1;
+}
+*/
 /*
 double rho_test(double t, double x) {
     return exp(t)*(cos(3*M_PI*x) + 1.5);
@@ -25,26 +66,6 @@ double f_0_test(double t, double x) {
     return rho_test(t,x) + (-u_test(t,x)*exp(t)*3*M_PI*sin(3*M_PI*x) + rho_test(t, x)*cos(2*M_PI*t)*4*M_PI*cos(4*M_PI*x));
 }
 */
-
-double rho_1(double /*t*/, double x) {
-    return (x < 4.5 || x > 5.5) ? 1 : 2;
-}
-
-double u_1(double /*t*/, double /*x*/) {
-    return 0;
-}
-
-double rho_2(double /*t*/, double /*x*/) {
-    return 1;
-}
-
-double u_2(double /*t*/, double x) {
-    return (x < 4.5 || x > 5.5) ? 0 : 1;
-}
-
-double f(double /*t*/, double /*x*/, double /*mu*/) {
-    return 0;
-}
 /*
 double f_test_1(double t, double x, double mu) {
     return 10/(x+1);//10/(x+t+1);//((x+1)*(x*x-x) + (t+1)*(t+1)*(x*x*x-x)*(2*x-1) + 10 - mu*2)/x+1;

@@ -45,8 +45,7 @@ int main(int argc, char *argv[]) {
 
     P_gas p_gas;
     P_she p_she;
-    p_gas.Segm_T = 100;
-    p_gas.Segm_X = 10;
+    p_gas.Segm_X = 1;
     p_gas.mu = mu;
     p_gas.f = f;
     p_gas.p_mode = mode;
@@ -74,12 +73,12 @@ int main(int argc, char *argv[]) {
     double time = clock();
     int n_st = 0;
     solve(p_gas, p_she, n_st, res1, buf, 0, fp_u, fp_rho);
-    p_she.N = n_st;
-    solve(p_gas, p_she, n_st, res1, buf, 1);
     double stab_norm = stabilization_norm(res1 + m + 1, res1, m);
-    time = (clock() - time)/CLOCKS_PER_SEC;
     printf("mode = %d, n_st = %d, T_st = %f stab_norm = %le, time = %.2f\n", mode, n_st, n_st*tau, stab_norm, time);
 /*   
+    p_she.N = n_st;
+    solve(p_gas, p_she, n_st, res1, buf, 1);
+    time = (clock() - time)/CLOCKS_PER_SEC;
     int n_st_plug = n_st;
     p_she.N = n_st/10;
     solve(p_gas, p_she, n_st_plug, res1, buf, 0);
