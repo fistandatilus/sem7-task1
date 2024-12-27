@@ -1,7 +1,34 @@
+#include <pthread.h>
 #include <cstdio>
-#include <time.h>
+#include <sys/sysinfo.h>
+#include <sys/time.h>
 #include <fenv.h>
 #include "gas_one.h"
+
+struct arguments {
+    P_gas *p_gas;
+    P_she *p_she;
+    double t_st = -1; //return 
+    double stab_norm = -1; //return
+    int k;
+    int thread;
+
+    void set(P_gas *p_gas, P_she *p_she, int k, int thread) {
+    this->p_gas = p_gas;
+    this->p_she = p_she;
+    this->k = k;
+    this->thread = thread;
+    }
+};
+
+void *thread_main(void *args_ptr);
+double get_full_time();
+
+double get_full_time() {
+    timeval buf;
+    gettimeofday(&buf, 0);
+    return buf.tv_sec + buf.tv_usec / 1e6;
+}
 
 int main(int argc, char *argv[]) {
     //feenableexcept(FE_ALL_EXCEPT ^ FE_INEXACT);
@@ -43,8 +70,10 @@ int main(int argc, char *argv[]) {
         return -2;
     }
 
-    P_gas p_gas;
-    P_she p_she;
+    P_gas *p_gas_ptr = new P_gas;
+    P_she *p_she_ptr = new P_she;
+    P_gas &p_gas = *p_gas_ptr;
+    P_she &p_she = *p_she_ptr;
     p_gas.Segm_X = 1;
     p_gas.mu = mu;
     p_gas.f = f;
@@ -70,11 +99,38 @@ int main(int argc, char *argv[]) {
     p_she.h_x = p_gas.Segm_X/m;
     p_she.tau = tau;
     p_she.eps = eps;
-    double time = clock();
-    int n_st = 0;
-    solve(p_gas, p_she, n_st, res1, buf, 0, fp_u, fp_rho);
-    double stab_norm = stabilization_norm(res1 + m + 1, res1, m);
-    printf("mode = %d, n_st = %d, T_st = %f stab_norm = %le, time = %.2f\n", mode, n_st, n_st*tau, stab_norm, time);
+
+    pthread_t tid[19];
+    arguments arg[19];
+    int thread_count = 0;
+    for (int i = 1; i <= 10; i++) { 
+        arg[thread_count].set(p_gas_ptr, p_she_ptr, i, thread_count);
+        if (i > 1) pthread_create(tid+thread_count, 0, thread_main, arg+thread_count);
+        thread_count++;
+    }
+    for (int i = 1; i < 10; i++) { 
+        arg[thread_count].set(p_gas_ptr, p_she_ptr, 10 + i*m/10, thread_count);
+        pthread_create(tid+thread_count, 0, thread_main, arg+thread_count);
+        thread_count++;
+    }
+    thread_main(arg+0);
+
+    for (int i = 1; i < 19; i++) {
+        pthread_join(tid[i], 0);
+    }
+
+    FILE *fp = fopen("task3_table.tex", "a");
+    if (fp != nullptr) 
+    { 
+        fprintf(fp, "$\\begin{array}{c}\\mu = %.3f\\\\p(\\rho) = %s\\\\\\tau = %f\\\\h = %f\\end{array}$", mu, (mode == 0 ? "\\rho" : mode == 1 ? "10\\rho" : mode == 2 ? "100\\rho" : "\\rho^{1,4}"), tau, p_she.h_x);
+        for (int i = 0; i < 19; i++) {
+            fprintf(fp, "&$%f$ ", arg[i].t_st);
+        }
+        fprintf(fp, "\\\\\n\\hline\n");
+
+        fclose(fp);
+    }
+    
 /*   
     p_she.N = n_st;
     solve(p_gas, p_she, n_st, res1, buf, 1);
@@ -104,7 +160,42 @@ int main(int argc, char *argv[]) {
     delete[] res1;
     delete[] res2;
     delete[] buf;
+    delete p_gas_ptr;
+    delete p_she_ptr;
     if (fp_u) fclose(fp_u);
     if (fp_rho) fclose(fp_rho);
     return 0;
+}
+
+
+
+void *thread_main(void *args_ptr){
+    arguments &args = *((arguments *)args_ptr);
+
+    P_gas &p_gas = *args.p_gas;
+    P_she &p_she = *args.p_she;
+
+    int m = p_she.M_x;
+
+    double *res1, *buf;
+    res1 = new double[2*(m+1)];
+    buf = new double[6*(m+1)];
+    cpu_set_t cpu;
+    CPU_ZERO(&cpu);
+    int nproc = get_nprocs();
+    int cpu_id = nproc - 1 - args.thread%nproc;
+    CPU_SET(cpu_id, &cpu);
+    pthread_t tid = pthread_self();
+    pthread_setaffinity_np(tid, sizeof(cpu_set_t), &cpu);
+
+    double time = get_full_time();
+    int n_st = 0;
+    solve(p_gas, p_she, n_st, res1, buf, 0, args.k);
+    double stab_norm = stabilization_norm(res1 + m + 1, res1, m);
+    time = get_full_time() - time;
+    printf("mode = %d, n_st = %d, T_st = %f stab_norm = %le, time = %.2f\n", p_gas.p_mode, n_st, n_st*p_she.tau, stab_norm, time);
+
+    args.t_st = p_she.tau*n_st;
+    args.stab_norm = stab_norm;
+    return nullptr;
 }

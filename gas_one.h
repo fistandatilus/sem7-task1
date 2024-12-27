@@ -47,7 +47,7 @@ int progonka(int n, double *a, double *b, double *c, const double *f);
 void check_matrix(int n, const double *a, const double *b, const double *c);
 
 //схема
-void solve(const P_gas &p_gas, const P_she &p_she, int &n, double *res, double *buf, int print, FILE *fp_u=nullptr, FILE *fp_rho=nullptr);
+void solve(const P_gas &p_gas, const P_she &p_she, int &n, double *res, double *buf, int print, int k, FILE *fp_u=nullptr, FILE *fp_rho=nullptr);
 
 //нормы
 double C_norm(const P_she &p_she, const double *res1, const double *res2, const int scale=1);

@@ -49,7 +49,7 @@ double stabilization_norm(const double *h, const double *v, int M) {
 }
 
 
-void solve(const P_gas &p_gas, const P_she &p_she, int &n, double *res, double *buf, int print, FILE *fp_u, FILE *fp_h) {
+void solve(const P_gas &p_gas, const P_she &p_she, int &n, double *res, double *buf, int print, int k, FILE *fp_u, FILE *fp_h) {
     double *a, *b, *ch, *cv, *f, *v, *h, *ph;
     double tau = p_she.tau;
     double h_x = p_she.h_x;
@@ -75,15 +75,14 @@ void solve(const P_gas &p_gas, const P_she &p_she, int &n, double *res, double *
     //начальные данные и масса
     mass0 = 0;
     for (int i = 0; i <= M; i++) {
-        v[i] = u_2(0, i*h_x);
-        h[i] = rho_2(0, i*h_x);
+        v[i] = u_2(0, i*h_x, k);
+        h[i] = rho_2(0, i*h_x, k);
         mass0 += h[i];
     }
     
     double stab_norm = stabilization_norm(h, v, M);
-    int i = 1;
+    //int i = 1;
 
-    //printf("eps = %e\n", eps);
     for(n = 1; n <= N && stab_norm > eps; n++) {
         //один шаг
         //нахождение мю с волной
@@ -165,6 +164,7 @@ void solve(const P_gas &p_gas, const P_she &p_she, int &n, double *res, double *
         memcpy(v, cv, (M+1)*sizeof(double));
         memcpy(h, ch, (M+1)*sizeof(double));
         stab_norm = stabilization_norm(h, v, M);
+        /*
         if (fp_u && fp_h) {
             for (int i = 1; i < M; i++) {
                 fprintf(fp_u, "%e ", v[i]);
@@ -191,6 +191,7 @@ void solve(const P_gas &p_gas, const P_she &p_she, int &n, double *res, double *
             mass[n/(N/4) - 1] = (loc_mass - mass0)/mass0;
             norm[n/(N/4) - 1] = stab_norm;
         }
+        */
     }
 /*    
     if (print) {
