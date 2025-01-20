@@ -119,7 +119,7 @@ int main(int argc, char *argv[]) {
         pthread_join(tid[i], 0);
     }
 
-    FILE *fp = fopen("task3_table.tex", "a");
+    FILE *fp = fopen("task3_table_2.tex", "a");
     if (fp != nullptr) 
     { 
         fprintf(fp, "$\\begin{array}{c}\\mu = %.3f\\\\p(\\rho) = %s\\\\\\tau = %f\\\\h = %f\\end{array}$", mu, (mode == 0 ? "\\rho" : mode == 1 ? "10\\rho" : mode == 2 ? "100\\rho" : "\\rho^{1,4}"), tau, p_she.h_x);

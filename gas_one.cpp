@@ -75,8 +75,13 @@ void solve(const P_gas &p_gas, const P_she &p_she, int &n, double *res, double *
     //начальные данные и масса
     mass0 = 0;
     for (int i = 0; i <= M; i++) {
+        
+        v[i] = u_1(0, i*h_x, k);
+        h[i] = rho_1(0, i*h_x, k);
+        /*
         v[i] = u_2(0, i*h_x, k);
         h[i] = rho_2(0, i*h_x, k);
+        */
         mass0 += h[i];
     }
     
