@@ -13,6 +13,10 @@ struct P_gas {
     double p_gamma;
     int p_mode;
     double mu;
+    //граничные условия в 4 задаче
+    double u_left;
+    double rho_left;
+
     double (*f)(double, double, double);   //правая часть
     double (*f_0)(double, double); //дополнительная правая часть для отладочного теста
     int k;
@@ -24,6 +28,7 @@ struct P_she {
     //Для задачи 1 N - число разбиений, для отсальных - максимум итераций
     int N = 0;
     int Dim = 0;
+    int stab_const = 1;
     double h_x = 0;
     double tau = 0;
     double eps = 0;
@@ -33,6 +38,7 @@ struct P_she {
         M_x = a.M_x;
         N = a.N;
         Dim = a.Dim;
+        stab_const = a.stab_const;
         h_x = a.h_x;
         tau = a.tau;
         eps = a.eps;
@@ -47,7 +53,7 @@ int progonka(int n, double *a, double *b, double *c, const double *f);
 void check_matrix(int n, const double *a, const double *b, const double *c);
 
 //схема
-void solve(const P_gas &p_gas, const P_she &p_she, int &n, double *res, double *buf, int print, int k, FILE *fp_u=nullptr, FILE *fp_rho=nullptr);
+void solve(const P_gas &p_gas, const P_she &p_she, int &n, double *res, double *buf, double &stab_norm, int print, FILE *fp_u=nullptr, FILE *fp_rho=nullptr);
 
 //нормы
 double C_norm(const P_she &p_she, const double *res1, const double *res2, const int scale=1);

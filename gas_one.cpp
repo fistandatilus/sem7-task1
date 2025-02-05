@@ -49,18 +49,23 @@ double stabilization_norm(const double *h, const double *v, int M) {
 }
 
 
-void solve(const P_gas &p_gas, const P_she &p_she, int &n, double *res, double *buf, int print, int k, FILE *fp_u, FILE *fp_h) {
-    double *a, *b, *ch, *cv, *f, *v, *h, *ph;
+void solve(const P_gas &p_gas, const P_she &p_she, int &n, double *res, double *buf, double &stab_norm, int print, FILE *fp_u, FILE *fp_h) {
+    double *a, *b, *ch, *cv, *f, *v, *h, *ph, *v_stab, *h_stab;
     double tau = p_she.tau;
     double h_x = p_she.h_x;
     double eps = p_she.eps;
     double mu = p_gas.mu;
+    double v_left = p_gas.u_left;
+    double h_left = p_gas.rho_left;
     int M = p_she.M_x;
     int N = p_she.N;
     int dim = p_she.Dim;
     auto func = p_gas.f;
-    double mu_loc, mass0, mass[4], norm[4];
+    double mu_loc;
     double *res2 = new double[2*(M+1)];
+    int stab_count = 10;
+    int stab_const = p_she.stab_const;
+    int n_st = 0;
 
     v = res;
     h = v + dim;
@@ -71,24 +76,20 @@ void solve(const P_gas &p_gas, const P_she &p_she, int &n, double *res, double *
     ph = buf + 3*(M + 1);
     cv = buf + 4*(M + 1);
     ch = buf + 5*(M + 1);
+    v_stab = buf + 6*(M + 1);
+    h_stab = buf + 7*(M + 1);
 
-    //начальные данные и масса
-    mass0 = 0;
+    //начальные данные
     for (int i = 0; i <= M; i++) {
-        
-        v[i] = u_1(0, i*h_x, k);
-        h[i] = rho_1(0, i*h_x, k);
-        /*
-        v[i] = u_2(0, i*h_x, k);
-        h[i] = rho_2(0, i*h_x, k);
-        */
-        mass0 += h[i];
+        v[i] = u_1(0, i*h_x);
+        h[i] = rho_1(0, i*h_x);
     }
-    
-    double stab_norm = stabilization_norm(h, v, M);
-    //int i = 1;
+    memcpy(v_stab, v, (M+1)*sizeof(double));
+    memcpy(h_stab, h, (M+1)*sizeof(double));
 
-    for(n = 1; n <= N && stab_norm > eps; n++) {
+    int i = 1;
+
+    for(n = 1; n <= N && stab_count > 0; n++) {
         //один шаг
         //нахождение мю с волной
         //if (n % (N/10) == 0) printf("n = %d, %e\n", n, stabilization_norm(h, v, M));
@@ -109,8 +110,9 @@ void solve(const P_gas &p_gas, const P_she &p_she, int &n, double *res, double *
             }
         }
 
-        v[0] = 0;
-        v[M] = 0;
+        //граничные условия на v
+        v[0] = v_left;
+        v[M] = v[M-1];
 
         //заполнение для V
         double frac = tau*mu_loc/h_x/h_x;
@@ -130,16 +132,16 @@ void solve(const P_gas &p_gas, const P_she &p_she, int &n, double *res, double *
         b[M] = 0;
         f[M] = 0;
         progonka(M+1, a, b, cv, f);
-        cv[0] = 0;
-        cv[M] = 0;
-       //for (int i = 0; i <= M; i++) printf("cv = %le, f = %le %d\n", cv[i], f[i], i);
+        cv[0] = v_left;
+        cv[M] = cv[M-1];
+        //for (int i = 0; i <= M; i++) printf("cv = %le, f = %le %d\n", cv[i], f[i], i);
 
         //заполнение для H
-        ch[0] = 1 - (tau/2/h_x)*cv[0];
-        b[0] = tau/2/h_x*cv[1];
+        ch[0] = 1;
+        b[0] = 0;
+        f[0] = h_left;
         a[0] = 0;
         a[1] = -tau/4/h_x*(cv[0] + cv[1]);
-        f[0] = h[0] - tau/2/h_x*(h[0]*cv[1] - h[0]*cv[0] - (2*h[0]*v[0] - 2.5*h[1]*v[1] + 2*h[2]*v[2] - 0.5*h[3]*v[3] - 2.5*h[0]*v[1] + 2*h[0]*v[2] - 0.5*h[0]*v[3]));
         for (int i = 1; i <= M-1; i++) {
             ch[i] = 1;
             cososim = tau/4/h_x*(cv[i] + cv[i+1]);
@@ -152,6 +154,7 @@ void solve(const P_gas &p_gas, const P_she &p_she, int &n, double *res, double *
         b[M] = 0;
         f[M] = h[M] - tau/2/h_x*(-h[M]*cv[M-1] + h[M]*cv[M] + 2*h[M]*v[M] - 2.5*h[M-1]*v[M-1] + 2*h[M-2]*v[M-2] - 0.5*h[M-3]*v[M-3] - 2.5*h[M]*v[M-1] + 2*h[M]*v[M-2] - 0.5*h[M]*v[M-3]);
         progonka(M+1, a, b, ch, f);
+        ch[0] = h_left;
         //printf("h[0] = %le, h[M] = %le\n", ch[0], ch[M]);
         /*
         double *cv2 = res2;
@@ -168,7 +171,20 @@ void solve(const P_gas &p_gas, const P_she &p_she, int &n, double *res, double *
         */
         memcpy(v, cv, (M+1)*sizeof(double));
         memcpy(h, ch, (M+1)*sizeof(double));
-        stab_norm = stabilization_norm(h, v, M);
+        stab_norm = C_norm(p_she, cv, v_stab);
+        printf("stab_norm = %e, stab_const = %d, stab_count = %d\n", stab_norm, stab_const, stab_count);
+        if (stab_norm <= eps) {
+            stab_count--;
+        }
+        else {
+            memcpy(v_stab, cv, (M+1)*sizeof(double));
+            memcpy(h_stab, ch, (M+1)*sizeof(double));
+            n_st = n;
+            if (n > stab_const)
+                stab_count = 1000;//n/stab_const;
+            else
+                stab_count = 10;
+        }
         /*
         if (fp_u && fp_h) {
             for (int i = 1; i < M; i++) {
@@ -178,6 +194,7 @@ void solve(const P_gas &p_gas, const P_she &p_she, int &n, double *res, double *
                 fprintf(fp_u, "\n");
                 fprintf(fp_h, "\n");
         }
+        */
         if (n%(N/4) == 0 && print) {
             char name_u[1234], name_h[1234];
             sprintf(name_u, "%d4u_2.dat", i);
@@ -185,18 +202,14 @@ void solve(const P_gas &p_gas, const P_she &p_she, int &n, double *res, double *
             i++;
             FILE *fp_u = fopen(name_u, "w");
             FILE *fp_h = fopen(name_h, "w");
-            double loc_mass = 0;
             for (int i = 0; i <= M; i++) {
-                loc_mass += h[i];
                 fprintf(fp_u, "%e ", v[i]);
                 fprintf(fp_h, "%e ", h[i]);
             }
             fclose(fp_u);
             fclose(fp_h);
-            mass[n/(N/4) - 1] = (loc_mass - mass0)/mass0;
-            norm[n/(N/4) - 1] = stab_norm;
         }
-        */
+        
     }
 /*    
     if (print) {
@@ -217,5 +230,5 @@ void solve(const P_gas &p_gas, const P_she &p_she, int &n, double *res, double *
     }
 */
     delete[] res2;
-    n--;
+    n = n_st;
 }

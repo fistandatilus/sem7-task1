@@ -21,7 +21,6 @@ struct arguments {
     }
 };
 
-void *thread_main(void *args_ptr);
 double get_full_time();
 
 double get_full_time() {
@@ -32,12 +31,15 @@ double get_full_time() {
 
 int main(int argc, char *argv[]) {
     //feenableexcept(FE_ALL_EXCEPT ^ FE_INEXACT);
-    int n, m, mode;
-    double mu, tau, eps;
-    if (!(argc >= 7 && sscanf(argv[1], "%d", &n) == 1 && sscanf(argv[2], "%d", &m) == 1 
-        && sscanf(argv[3], "%lf", &tau) == 1 && sscanf(argv[4], "%lf", &mu) == 1 && sscanf(argv[5], "%lf", &eps) == 1 
-        && sscanf(argv[6], "%d", &mode) == 1 && mode > 0 && mode <= 4)) {
-        printf("program usage: %s N M tau mu eps mode [u_file rho_file]\n", argv[0]);
+    int n, m, mode, stab_const;
+    double mu, v_left, rho_left, tau, eps;
+    if (!(argc >= 10 && sscanf(argv[1], "%d", &n) == 1 && sscanf(argv[2], "%d", &m) == 1 
+        && sscanf(argv[3], "%lf", &tau) == 1 && sscanf(argv[4], "%lf", &mu) == 1 
+         && sscanf(argv[5], "%lf", &v_left) == 1 && sscanf(argv[6], "%lf", &rho_left) == 1
+        && sscanf(argv[7], "%d", &stab_const) == 1 
+        && sscanf(argv[8], "%lf", &eps) == 1 && sscanf(argv[9], "%d", &mode) == 1 && mode > 0 && mode <= 4
+        )) {
+        printf("program usage: %s N M tau mu v rho k eps mode [u_file rho_file]\n", argv[0]);
         return 1;
     }
 
@@ -45,9 +47,9 @@ int main(int argc, char *argv[]) {
 
     FILE *fp_u = nullptr, *fp_rho = nullptr;
 
-    if (argc == 9) {
-        fp_u = fopen(argv[7], "w");
-        fp_rho = fopen(argv[8], "w");
+    if (argc == 12) {
+        fp_u = fopen(argv[10], "w");
+        fp_rho = fopen(argv[11], "w");
         if (!fp_u || !fp_rho) {
             printf("cannot open file!\n");
             if (fp_u) fclose(fp_u);
@@ -58,7 +60,7 @@ int main(int argc, char *argv[]) {
     double *res1, *res2, *buf;
     res1 = new double[2*(m+1)];
     res2 = new double[(1u << (4+4))*2*(m+1)];
-    buf = new double[6*(1u << (4+4))*(m+1)];
+    buf = new double[8*(1u << (4+4))*(m+1)];
 
     if (!(res1 && res2 && buf)) {
         printf("Memory error");
@@ -74,7 +76,7 @@ int main(int argc, char *argv[]) {
     P_she *p_she_ptr = new P_she;
     P_gas &p_gas = *p_gas_ptr;
     P_she &p_she = *p_she_ptr;
-    p_gas.Segm_X = 1;
+    p_gas.Segm_X = 10;
     p_gas.mu = mu;
     p_gas.f = f;
     p_gas.p_mode = mode;
@@ -99,38 +101,22 @@ int main(int argc, char *argv[]) {
     p_she.h_x = p_gas.Segm_X/m;
     p_she.tau = tau;
     p_she.eps = eps;
+    p_she.stab_const = stab_const;
 
-    pthread_t tid[19];
-    arguments arg[19];
-    int thread_count = 0;
-    for (int i = 1; i <= 10; i++) { 
-        arg[thread_count].set(p_gas_ptr, p_she_ptr, i, thread_count);
-        if (i > 1) pthread_create(tid+thread_count, 0, thread_main, arg+thread_count);
-        thread_count++;
-    }
-    for (int i = 1; i < 10; i++) { 
-        arg[thread_count].set(p_gas_ptr, p_she_ptr, 10 + i*m/10, thread_count);
-        pthread_create(tid+thread_count, 0, thread_main, arg+thread_count);
-        thread_count++;
-    }
-    thread_main(arg+0);
+    cpu_set_t cpu;
+    CPU_ZERO(&cpu);
+    int nproc = get_nprocs();
+    int cpu_id = nproc - 1;
+    CPU_SET(cpu_id, &cpu);
+    pthread_t tid = pthread_self();
+    pthread_setaffinity_np(tid, sizeof(cpu_set_t), &cpu);
 
-    for (int i = 1; i < 19; i++) {
-        pthread_join(tid[i], 0);
-    }
-
-    FILE *fp = fopen("task3_table_2.tex", "a");
-    if (fp != nullptr) 
-    { 
-        fprintf(fp, "$\\begin{array}{c}\\mu = %.3f\\\\p(\\rho) = %s\\\\\\tau = %f\\\\h = %f\\end{array}$", mu, (mode == 0 ? "\\rho" : mode == 1 ? "10\\rho" : mode == 2 ? "100\\rho" : "\\rho^{1,4}"), tau, p_she.h_x);
-        for (int i = 0; i < 19; i++) {
-            fprintf(fp, "&$%f$ ", arg[i].t_st);
-        }
-        fprintf(fp, "\\\\\n\\hline\n");
-
-        fclose(fp);
-    }
-    
+    double time = get_full_time();
+    int n_st = 0;
+    double stab_norm = eps + 1;
+    solve(p_gas, p_she, n_st, res1, buf, stab_norm, 1);
+    time = get_full_time() - time;
+    printf("mode = %d, n_st = %d, T_st = %f stab_norm = %le, time = %.2f\n", p_gas.p_mode, n_st, n_st*p_she.tau, stab_norm, time);
 /*   
     p_she.N = n_st;
     solve(p_gas, p_she, n_st, res1, buf, 1);
@@ -167,35 +153,3 @@ int main(int argc, char *argv[]) {
     return 0;
 }
 
-
-
-void *thread_main(void *args_ptr){
-    arguments &args = *((arguments *)args_ptr);
-
-    P_gas &p_gas = *args.p_gas;
-    P_she &p_she = *args.p_she;
-
-    int m = p_she.M_x;
-
-    double *res1, *buf;
-    res1 = new double[2*(m+1)];
-    buf = new double[6*(m+1)];
-    cpu_set_t cpu;
-    CPU_ZERO(&cpu);
-    int nproc = get_nprocs();
-    int cpu_id = nproc - 1 - args.thread%nproc;
-    CPU_SET(cpu_id, &cpu);
-    pthread_t tid = pthread_self();
-    pthread_setaffinity_np(tid, sizeof(cpu_set_t), &cpu);
-
-    double time = get_full_time();
-    int n_st = 0;
-    solve(p_gas, p_she, n_st, res1, buf, 0, args.k);
-    double stab_norm = stabilization_norm(res1 + m + 1, res1, m);
-    time = get_full_time() - time;
-    printf("mode = %d, n_st = %d, T_st = %f stab_norm = %le, time = %.2f\n", p_gas.p_mode, n_st, n_st*p_she.tau, stab_norm, time);
-
-    args.t_st = p_she.tau*n_st;
-    args.stab_norm = stab_norm;
-    return nullptr;
-}

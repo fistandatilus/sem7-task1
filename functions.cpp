@@ -1,26 +1,37 @@
 #include "functions.h"
 
+// Функции для задания 4
 
-// Функции для задания 3
-double rho_1(double /*t*/, double x, int k) {
-    return 2 + sin(k*M_PI*x);
-}
-
-double u_1(double /*t*/, double /*x*/, int /*k*/) {
-    return 0;
-}
-
-double rho_2(double /*t*/, double /*x*/, int /*k*/) {
+double rho_1(double /*t*/, double /*x*/) {
     return 1;
 }
 
-double u_2(double /*t*/, double x, int k) {
-    return sin(k*M_PI*x);
+double u_1(double /*t*/, double /*x*/) {
+    return 0;
 }
+
 
 double f(double /*t*/, double /*x*/, double /*mu*/) {
     return 0;
 }
+/*
+// Функции для задания 3
+double rho_1(double t, double x, int k) {
+    return 2 + sin(k*M_PI*x);
+}
+
+double u_1(double t, double x, int k) {
+    return 0;
+}
+
+double rho_2(double t, double x, int k) {
+    return 1;
+}
+
+double u_2(double t, double x, int k) {
+    return sin(k*M_PI*x);
+}
+*/
 
 /*
 // Функции для задания 2
