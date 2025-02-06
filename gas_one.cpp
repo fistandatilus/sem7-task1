@@ -126,22 +126,18 @@ void solve(const P_gas &p_gas, const P_she &p_she, int &n, double *res, double *
         cv[0] = 1;
         a[0] = 0;
         b[0] = 0;
-        f[0] = 0;
+        f[0] = v_left;
         cv[M] = 1;
         a[M] = 0;
         b[M] = 0;
-        f[M] = 0;
+        f[M] = v[M-1];
         progonka(M+1, a, b, cv, f);
         cv[0] = v_left;
         cv[M] = cv[M-1];
         //for (int i = 0; i <= M; i++) printf("cv = %le, f = %le %d\n", cv[i], f[i], i);
 
         //заполнение для H
-        ch[0] = 1;
-        b[0] = 0;
-        f[0] = h_left;
-        a[0] = 0;
-        a[1] = -tau/4/h_x*(cv[0] + cv[1]);
+        ch[0] = h_left;
         for (int i = 1; i <= M-1; i++) {
             ch[i] = 1;
             cososim = tau/4/h_x*(cv[i] + cv[i+1]);
@@ -149,12 +145,14 @@ void solve(const P_gas &p_gas, const P_she &p_she, int &n, double *res, double *
             a[i+1] = -cososim;
             f[i] = h[i] - tau/4/h_x*h[i]*(cv[i+1] - cv[i-1]);
         }
+        f[1] -= -tau/4/h_x*(cv[0] + cv[1])*ch[0];
+        a[1] = 0;
         ch[M] = 1 + (tau/2/h_x)*cv[M];
         a[M] = -tau/2/h_x*v[M-1];
         b[M] = 0;
         f[M] = h[M] - tau/2/h_x*(-h[M]*cv[M-1] + h[M]*cv[M] + 2*h[M]*v[M] - 2.5*h[M-1]*v[M-1] + 2*h[M-2]*v[M-2] - 0.5*h[M-3]*v[M-3] - 2.5*h[M]*v[M-1] + 2*h[M]*v[M-2] - 0.5*h[M]*v[M-3]);
-        progonka(M+1, a, b, ch, f);
-        ch[0] = h_left;
+        progonka(M, a+1, b+1, ch+1, f+1);
+
         //printf("h[0] = %le, h[M] = %le\n", ch[0], ch[M]);
         /*
         double *cv2 = res2;
@@ -172,7 +170,7 @@ void solve(const P_gas &p_gas, const P_she &p_she, int &n, double *res, double *
         memcpy(v, cv, (M+1)*sizeof(double));
         memcpy(h, ch, (M+1)*sizeof(double));
         stab_norm = C_norm(p_she, cv, v_stab);
-        printf("stab_norm = %e, stab_const = %d, stab_count = %d\n", stab_norm, stab_const, stab_count);
+        //printf("n = %d, stab_norm = %e, stab_const = %d, stab_count = %d\n", n, stab_norm, stab_const, stab_count);
         if (stab_norm <= eps) {
             stab_count--;
         }
@@ -181,7 +179,7 @@ void solve(const P_gas &p_gas, const P_she &p_she, int &n, double *res, double *
             memcpy(h_stab, ch, (M+1)*sizeof(double));
             n_st = n;
             if (n > stab_const)
-                stab_count = 1000;//n/stab_const;
+                stab_count = (1./tau)/stab_const;
             else
                 stab_count = 10;
         }

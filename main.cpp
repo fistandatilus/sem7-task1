@@ -32,10 +32,10 @@ double get_full_time() {
 int main(int argc, char *argv[]) {
     //feenableexcept(FE_ALL_EXCEPT ^ FE_INEXACT);
     int n, m, mode, stab_const;
-    double mu, v_left, rho_left, tau, eps;
+    double mu, u_left, rho_left, tau, eps;
     if (!(argc >= 10 && sscanf(argv[1], "%d", &n) == 1 && sscanf(argv[2], "%d", &m) == 1 
         && sscanf(argv[3], "%lf", &tau) == 1 && sscanf(argv[4], "%lf", &mu) == 1 
-         && sscanf(argv[5], "%lf", &v_left) == 1 && sscanf(argv[6], "%lf", &rho_left) == 1
+         && sscanf(argv[5], "%lf", &u_left) == 1 && sscanf(argv[6], "%lf", &rho_left) == 1
         && sscanf(argv[7], "%d", &stab_const) == 1 
         && sscanf(argv[8], "%lf", &eps) == 1 && sscanf(argv[9], "%d", &mode) == 1 && mode > 0 && mode <= 4
         )) {
@@ -94,6 +94,9 @@ int main(int argc, char *argv[]) {
             p_gas.p_gamma = GAMMA;
             break;
     };
+
+    p_gas.u_left = u_left;
+    p_gas.rho_left = rho_left;
 
     p_she.M_x = m;
     p_she.N = n;
