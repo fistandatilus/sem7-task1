@@ -20,6 +20,22 @@ struct P_gas {
     double (*f)(double, double, double);   //правая часть
     double (*f_0)(double, double); //дополнительная правая часть для отладочного теста
     int k;
+
+    P_gas() = default;
+    P_gas& operator=(P_gas &a) {
+    Segm_T = a.Segm_T;
+    Segm_X = a.Segm_X;
+    p_ro = a.p_ro;
+    p_gamma = a.p_gamma;
+    p_mode = a.p_mode;
+    mu = a.mu;
+    u_left = a.u_left;
+    rho_left = a.rho_left;
+    f = a.f;
+    f_0 = a.f_0;
+    k = a.k;
+    return *this;
+    }
 };
 
 //Параметры схемы

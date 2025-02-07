@@ -87,8 +87,6 @@ void solve(const P_gas &p_gas, const P_she &p_she, int &n, double *res, double *
     memcpy(v_stab, v, (M+1)*sizeof(double));
     memcpy(h_stab, h, (M+1)*sizeof(double));
 
-    int i = 1;
-
     for(n = 1; n <= N && stab_count > 0; n++) {
         //один шаг
         //нахождение мю с волной
@@ -193,6 +191,7 @@ void solve(const P_gas &p_gas, const P_she &p_she, int &n, double *res, double *
                 fprintf(fp_h, "\n");
         }
         */
+        /*
         if (n%(N/4) == 0 && print) {
             char name_u[1234], name_h[1234];
             sprintf(name_u, "%d4u_2.dat", i);
@@ -207,6 +206,7 @@ void solve(const P_gas &p_gas, const P_she &p_she, int &n, double *res, double *
             fclose(fp_u);
             fclose(fp_h);
         }
+        */
         
     }
 /*    
