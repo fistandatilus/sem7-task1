@@ -8,18 +8,22 @@
 #define U_AMOUNT 9
 #define RHO_AMOUNT 9
 
-struct arguments {
+struct task_t {
     P_gas *p_gas;
     P_she *p_she;
     double t_st = -1; //return 
     double stab_norm = -1; //return
-    int thread;
 
-    void set(P_gas *p_gas, P_she *p_she, int thread) {
+    void set(P_gas *p_gas, P_she *p_she) {
     this->p_gas = p_gas;
     this->p_she = p_she;
-    this->thread = thread;
     }
+};
+
+struct thread_arguments{
+    task_t *tasks = nullptr;
+    int thread = 0;
+    int size = 0;
 };
 
 double get_full_time();
@@ -31,17 +35,19 @@ double get_full_time() {
 }
 
 void *thread_main(void *args_ptr);
+int get_next_task(int task_count = 0);
 
 int main(int argc, char *argv[]) {
     //feenableexcept(FE_ALL_EXCEPT ^ FE_INEXACT);
-    int n, m, mode, stab_const;
+    int n, m, mode, stab_const, thread_count;
     double mu, tau, eps;
-    if (!(argc >= 8 && sscanf(argv[1], "%d", &n) == 1 && sscanf(argv[2], "%d", &m) == 1 
+    if (!(argc >= 9 && sscanf(argv[1], "%d", &n) == 1 && sscanf(argv[2], "%d", &m) == 1 
         && sscanf(argv[3], "%lf", &tau) == 1 && sscanf(argv[4], "%lf", &mu) == 1 
         && sscanf(argv[5], "%d", &stab_const) == 1 
         && sscanf(argv[6], "%lf", &eps) == 1 && sscanf(argv[7], "%d", &mode) == 1 && mode > 0 && mode <= 4
+        && sscanf(argv[8], "%d", &thread_count) == 1 && thread_count >= 1
         )) {
-        printf("program usage: %s N M tau mu k eps mode [u_file rho_file]\n", argv[0]);
+        printf("program usage: %s N M tau mu k eps mode thread_count [u_file rho_file]\n", argv[0]);
         return 1;
     }
 
@@ -49,9 +55,9 @@ int main(int argc, char *argv[]) {
 
     FILE *fp_u = nullptr, *fp_rho = nullptr;
 
-    if (argc == 9) {
-        fp_u = fopen(argv[10], "w");
-        fp_rho = fopen(argv[11], "w");
+    if (argc == 11) {
+        fp_u = fopen(argv[9], "w");
+        fp_rho = fopen(argv[10], "w");
         if (!fp_u || !fp_rho) {
             printf("cannot open file!\n");
             if (fp_u) fclose(fp_u);
@@ -108,34 +114,45 @@ int main(int argc, char *argv[]) {
     p_she.eps = eps;
     p_she.stab_const = stab_const;
 
-    pthread_t *tid = new pthread_t[U_AMOUNT*RHO_AMOUNT];
-    arguments *arg = new arguments[U_AMOUNT*RHO_AMOUNT];
+    task_t *tasks = new task_t[U_AMOUNT*RHO_AMOUNT];
     P_gas *p_gases = new P_gas[U_AMOUNT*RHO_AMOUNT];
     for (int i = 0; i < U_AMOUNT; i++) { 
         for (int j = 0; j < RHO_AMOUNT; j++) {
             p_gases[i*U_AMOUNT + j] = p_gas;
             p_gases[i*U_AMOUNT + j].u_left = j+1;
             p_gases[i*U_AMOUNT + j].rho_left = i+1;
-            arg[i*U_AMOUNT + j].set(p_gases + i*U_AMOUNT + j, p_she_ptr, i*U_AMOUNT + j);
-            if (i >= 1 || j >= 1) pthread_create(tid + i*U_AMOUNT + j, 0, thread_main, arg + i*U_AMOUNT + j);
+            tasks[i*U_AMOUNT + j].set(p_gases + i*U_AMOUNT + j, p_she_ptr);
         }
     }
-    thread_main(arg+0);
 
-    for (int i = 1; i < U_AMOUNT*RHO_AMOUNT; i++) {
+    get_next_task(U_AMOUNT*RHO_AMOUNT);
+
+    pthread_t *tid = new pthread_t[thread_count];
+    thread_arguments *args = new thread_arguments[thread_count];
+    for (int i = 0; i < thread_count; i++) {
+        args[i].tasks = tasks;
+        args[i].thread = i;
+        args[i].size = m;
+        if (i) {
+            pthread_create(tid + i, 0, thread_main, args + i);
+        }
+    }
+    thread_main(args+0);
+
+    for (int i = 1; i < thread_count; i++) {
         pthread_join(tid[i], 0);
     }
 
-    printf("h = %f, $\\tau$ = %f, $\\mu = %f$, mode = %d", p_she.h_x, tau, mu, mode + 1);
+    printf("h = %f, $\\tau$ = %f, $\\mu = %f$, mode = %d\n", p_she.h_x, tau, mu, mode + 1);
     printf("\\begin{tabular}{*{%d}{|c}|}\n\\hline\n", U_AMOUNT + 1);
-    printf("$\\rho\\\\u$");
+    printf("\\diagbox{$\\rho}{u}$");
     for (int i = 1; i <= U_AMOUNT; i++)
         printf("&%2d", i);
     printf("\\\\\n\\hline\n");
     for (int i = 0; i < RHO_AMOUNT; i++) {
-        printf("&%2d", i+1);
+        printf("%2d", i+1);
         for (int j = 0; j < U_AMOUNT; j++)
-            printf("&$%.3f$", arg[i*U_AMOUNT + j].t_st);
+            printf("&$%.3f$", tasks[i*U_AMOUNT + j].t_st);
         printf("\\\\\n\\hline\n");
     }
     printf("\\end{tabular}\n");
@@ -170,8 +187,9 @@ int main(int argc, char *argv[]) {
     delete[] res2;
     delete[] buf;
     delete[] tid;
-    delete[] arg;
+    delete[] tasks;
     delete[] p_gases;
+    delete[] args;
     delete p_gas_ptr;
     delete p_she_ptr;
     if (fp_u) fclose(fp_u);
@@ -181,12 +199,10 @@ int main(int argc, char *argv[]) {
 
 
 void *thread_main(void *args_ptr){
-    arguments &args = *((arguments *)args_ptr);
+    thread_arguments &args = *((thread_arguments *)args_ptr);
 
-    P_gas &p_gas = *args.p_gas;
-    P_she &p_she = *args.p_she;
-
-    int m = p_she.M_x;
+    int m = args.size;
+    task_t *tasks = args.tasks;
 
     double *res1, *buf;
     res1 = new double[2*(m+1)];
@@ -194,21 +210,47 @@ void *thread_main(void *args_ptr){
     cpu_set_t cpu;
     CPU_ZERO(&cpu);
     int nproc = get_nprocs();
-    int cpu_id = nproc - 1 - args.thread%(nproc);
+    int cpu_id = nproc - 1 - args.thread%nproc;
     CPU_SET(cpu_id, &cpu);
     pthread_t tid = pthread_self();
     pthread_setaffinity_np(tid, sizeof(cpu_set_t), &cpu);
+    for (int i = get_next_task(); i >= 0; i = get_next_task())
+    {
+        task_t &task = tasks[i];
+        P_gas &p_gas = *task.p_gas;
+        P_she &p_she = *task.p_she;
 
-    double time = get_full_time();
-    int n_st = 0;
-    double stab_norm = p_she.eps + 1;
-    solve(p_gas, p_she, n_st, res1, buf, stab_norm, 1);
-    time = get_full_time() - time;
-    printf("u_l = %.0f, rho_l = %.0f, mode = %d, n_st = %d, T_st = %f stab_norm = %le, time = %.2f\n", p_gas.u_left, p_gas.rho_left, p_gas.p_mode, n_st, n_st*p_she.tau, stab_norm, time);
+        double time = get_full_time();
+        int n_st = 0;
+        double stab_norm = p_she.eps + 1;
+        solve(p_gas, p_she, n_st, res1, buf, stab_norm, 1);
+        time = get_full_time() - time;
+        printf("u_l = %.0f, rho_l = %.0f, mode = %d, n_st = %d, T_st = %f stab_norm = %le, time = %.2f\n", p_gas.u_left, p_gas.rho_left, p_gas.p_mode, n_st, n_st*p_she.tau, stab_norm, time);
 
-    args.t_st = p_she.tau*n_st;
-    args.stab_norm = stab_norm;
+        task.t_st = p_she.tau*n_st;
+        task.stab_norm = stab_norm;
+    }
     delete[] res1;
     delete[] buf;
     return nullptr;
+}
+
+int get_next_task(int task_count){
+    //инициализируется, если task_count != 0
+    static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+    static int tasks_remaining = -1;
+    int ret = -2;
+    
+    if (!task_count && tasks_remaining < 0) {
+        return -1;
+    }
+    pthread_mutex_lock(&mutex);
+    if (task_count) {
+        tasks_remaining = task_count-1;
+    }
+    else {
+        ret = tasks_remaining--;
+    }
+    pthread_mutex_unlock(&mutex);
+    return ret;
 }
